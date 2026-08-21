@@ -847,8 +847,9 @@ function persistState() {
 }
 
 /*
- * 設定が変更されるたびに、既に生成済みのPAC・構文検証結果・回帰テスト結果を破棄する。
- * これにより、変更前の古いPACがそのままダウンロードされてしまう事故を防ぐ。
+ * 設定が変更されるたびに、既に生成済みのPAC・構文検証結果・回帰テスト結果・
+ * URL単体テストの表示結果を破棄する。これにより、変更前の古いPACがそのまま
+ * ダウンロードされたり、変更前の判定結果がテスト画面に残り続けたりする事故を防ぐ。
  * persistState はシステム/経路/ガードテストの追加・編集・削除・並び替え・設定変更など、
  * すべての状態変更操作から呼び出されるため、ここに1箇所集約する。
  */
@@ -858,6 +859,7 @@ function invalidateGeneratedPac() {
     }
     uiState.regressionRun = null;
     uiState.lastRegression = null;
+    uiState.lastUrlTestResult = null;
 }
 
 /* =========================================================================
@@ -954,7 +956,7 @@ function validateRouteValue(value) {
     if (segments.length === 0) return "値が空です。";
     for (const seg of segments) {
         if (seg === "DIRECT") continue;
-        // Chromiumが対応するPACの経路キーワード（PROXY/HTTPS/SOCKS4/SOCKS5/SOCKSSまたはSOCKS）に準拠する。
+        // Chromiumが対応するPACの経路キーワード（PROXY/HTTPS/SOCKS4/SOCKS5/SOCKS）に準拠する。
         const m = /^(PROXY|HTTPS|SOCKS4|SOCKS5|SOCKS)\s+([^\s:]+):(\d{1,5})$/.exec(seg);
         if (!m) return `不正な形式です: "${seg}" (例: PROXY host:port または DIRECT)`;
         const port = Number(m[3]);
