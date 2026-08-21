@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iProxypac - proxy.pac 管理ツール</title>
+<style>
+:root {
+    --color-bg: #f4f5f7;
+    --color-panel: #ffffff;
+    --color-border: #d7dbe0;
+    --color-border-strong: #b7bdc6;
+    --color-text: #1f2430;
+    --color-text-muted: #5a6270;
+    --color-primary: #1a5fb4;
+    --color-primary-dark: #134a8e;
+    --color-primary-bg: #e8f0fb;
+    --color-danger: #c0392b;
+    --color-danger-bg: #fdecea;
+    --color-warning: #9a6b00;
+    --color-warning-bg: #fff6e0;
+    --color-success: #1e7d3c;
+    --color-success-bg: #e8f7ec;
+    --color-disabled: #9aa0a8;
+    --radius: 6px;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+h1, h2, h3, h4 { margin: 0 0 8px 0; font-weight: 600; }
+p { margin: 0 0 8px 0; }
+button {
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border-strong);
+    background: #fff;
+    padding: 6px 12px;
+    color: var(--color-text);
+}
+button:hover { background: #f0f2f5; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+button.primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary-dark);
+    color: #fff;
+}
+button.primary:hover { background: var(--color-primary-dark); }
+button.danger {
+    background: #fff;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+button.danger:hover { background: var(--color-danger-bg); }
+button.small { padding: 3px 8px; font-size: 12px; }
+input[type="text"], input[type="url"], input[type="search"], select, textarea {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 5px 8px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--color-text);
+}
+label { font-size: 12px; color: var(--color-text-muted); display: block; margin-bottom: 3px; }
+.field { margin-bottom: 10px; }
+.field-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.field-row .field { flex: 1; min-width: 180px; }
+
+header {
+    background: var(--color-panel);
+    border-bottom: 1px solid var(--color-border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+header .brand { display: flex; align-items: baseline; gap: 8px; }
+header .brand h1 { font-size: 18px; }
+header .brand .version { font-size: 12px; color: var(--color-text-muted); }
+header .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+header .autosave-note { font-size: 11px; color: var(--color-text-muted); }
+
+nav.tabs {
+    display: flex;
+    background: var(--color-panel);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 20px;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+nav.tabs button {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+nav.tabs button.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+}
+nav.tabs button:hover { background: var(--color-primary-bg); }
+
+main { padding: 18px 20px 60px; max-width: 1200px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.card {
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+.card > h2 { font-size: 15px; }
+.hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    margin-bottom: 12px;
+}
+.sample-banner {
+    background: var(--color-warning-bg);
+    border: 1px solid #e8c766;
+    color: var(--color-warning);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 12px;
+}
+.toolbar .field { margin-bottom: 0; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td {
+    border-bottom: 1px solid var(--color-border);
+    padding: 7px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: var(--color-bg); font-weight: 600; white-space: nowrap; }
+td.wrap-cell { max-width: 320px; word-break: break-all; }
+tr.disabled-row { color: var(--color-disabled); }
+tr:hover td { background: #fafbfc; }
+.col-actions { white-space: nowrap; text-align: right; }
+.col-actions button { margin-left: 4px; }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-pass { background: var(--color-success-bg); color: var(--color-success); }
+.badge-fail { background: var(--color-danger-bg); color: var(--color-danger); }
+.badge-warn { background: var(--color-warning-bg); color: var(--color-warning); }
+.badge-neutral { background: var(--color-bg); color: var(--color-text-muted); }
+.badge-on { background: var(--color-success-bg); color: var(--color-success); }
+.badge-off { background: var(--color-bg); color: var(--color-disabled); }
+
+.condition-tag {
+    display: block;
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: 2px 0;
+    word-break: break-all;
+}
+
+.msg-list { list-style: none; margin: 0; padding: 0; }
+.msg-list li {
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+.msg-list li.error { background: var(--color-danger-bg); color: var(--color-danger); border-color: #f0b8b0; }
+.msg-list li.warning { background: var(--color-warning-bg); color: var(--color-warning); border-color: #e8c766; }
+.msg-list li .icon { margin-right: 4px; }
+
+pre.code-preview {
+    background: #1e2430;
+    color: #e6e9ef;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    max-height: 520px;
+}
+
+.result-panel dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 14px;
+    margin: 0;
+}
+.result-panel dt { color: var(--color-text-muted); white-space: nowrap; }
+.result-panel dd { margin: 0; word-break: break-all; }
+
+.summary-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.summary-tile {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    min-width: 110px;
+    text-align: center;
+}
+.summary-tile .num { font-size: 22px; font-weight: 700; display: block; }
+.summary-tile.total .num { color: var(--color-text); }
+.summary-tile.pass .num { color: var(--color-success); }
+.summary-tile.fail .num { color: var(--color-danger); }
+.summary-tile .label { font-size: 12px; color: var(--color-text-muted); }
+
+dialog {
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    width: min(680px, 92vw);
+    max-height: 88vh;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+dialog::backdrop { background: rgba(20, 24, 32, 0.45); }
+dialog .dialog-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+dialog .dialog-body { padding: 14px 18px; overflow-y: auto; max-height: 62vh; }
+dialog .dialog-foot {
+    padding: 12px 18px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+dialog .dialog-error {
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+}
+dialog .dialog-error.show { display: block; }
+
+.subsection-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+.dyn-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.dyn-row select { flex: 0 0 200px; }
+.dyn-row input[type="text"] { flex: 1; }
+.dyn-row .remove-row { flex: 0 0 auto; }
+
+#toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2430;
+    color: #fff;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1000;
+    max-width: 80vw;
+    text-align: center;
+}
+#toast.show { opacity: 1; }
+
+.mono { font-family: "Consolas", "SFMono-Regular", Menlo, monospace; }
+.text-muted { color: var(--color-text-muted); }
+.empty-note { color: var(--color-text-muted); font-size: 13px; padding: 14px 4px; }
+.priority-controls { display: inline-flex; gap: 2px; }
+.priority-controls button { padding: 1px 6px; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <h1>iProxypac</h1>
+        <span class="version">v0.1.0</span>
+    </div>
+    <div class="actions">
+        <span class="autosave-note">変更内容はブラウザに自動保存されます</span>
+        <button id="btnExportJson" type="button">JSON書き出し</button>
+        <button id="btnImportJson" type="button">JSON読み込み</button>
+        <input id="fileImportJson" type="file" accept="application/json,.json" style="display:none">
+    </div>
+</header>
+
+<nav class="tabs">
+    <button type="button" class="tab-btn active" data-tab="systems">システム</button>
+    <button type="button" class="tab-btn" data-tab="routes">アクセス経路</button>
+    <button type="button" class="tab-btn" data-tab="tests">テスト</button>
+    <button type="button" class="tab-btn" data-tab="pac">PAC</button>
+</nav>
+
+<main>
+
+    <!-- ============ システム タブ ============ -->
+    <section id="tab-systems" class="tab-panel active">
+        <div class="hint">
+            国提供システム等を単位として登録します。1システムに複数の対象条件（ホスト完全一致・ワイルドカード・ドメイン一致・IP完全一致）と、
+            回帰テスト用のURLを複数登録できます。一覧の優先順位は上にあるほど先に判定されます（先に一致した条件が優先されます）。
+        </div>
+        <div id="sampleBannerSystems"></div>
+
+        <div class="card">
+            <div class="toolbar">
+                <div class="field">
+                    <label for="sysSearch">システム名で検索</label>
+                    <input type="search" id="sysSearch" placeholder="例: サンプル国システム">
+                </div>
+                <div class="field">
+                    <label for="sysEnabledFilter">有効/無効</label>
+                    <select id="sysEnabledFilter">
+                        <option value="all">すべて</option>
+                        <option value="enabled">有効のみ</option>
+                        <option value="disabled">無効のみ</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="sysResultFilter">回帰テスト結果</label>
+                    <select id="sysResultFilter">
+                        <option value="all">すべて</option>
+                        <option value="pass">全PASSのみ</option>
+                        <option value="fail">FAILを含む</option>
+                        <option value="untested">未実行のみ</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-left:auto;">
+                    <label>&nbsp;</label>
+                    <button type="button" class="primary" id="btnAddSystem">+ システム追加</button>
+                </div>
+            </div>
+            <div class="table-wrap" id="systemsTableWrap"></div>
+        </div>
+    </section>
+
+    <!-- ============ アクセス経路 タブ ============ -->
+    <section id="tab-routes" class="tab-panel">
+        <div class="hint">
+            「アクセス経路」は proxy.pac が return する値（DIRECT や PROXY host:port）をマスターとして管理します。
+            システム側では経路を個別に書かず、ここで登録した経路をプルダウンから選択します。
+            複数プロキシのフェイルオーバー（例: <span class="mono">PROXY a:8080; PROXY b:8080; DIRECT</span>）も1つの経路として登録できます。
+        </div>
+
+        <div class="card">
+            <h2>既定・共通ルール設定</h2>
+            <div class="field-row">
+                <div class="field">
+                    <label for="settingDefaultRoute">既定経路（どの条件にも一致しなかった場合）</label>
+                    <select id="settingDefaultRoute"></select>
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field" style="flex: 0 0 auto;">
+                    <label>
+                        <input type="checkbox" id="settingPlainHostEnabled">
+                        isPlainHostName の共通ルールを有効にする
+                    </label>
+                    <span class="text-muted" style="font-size:12px;">（例: 庁内短縮ホスト名など、ドメイン省略形式のホストに適用。個別システム条件より先に評価されます）</span>
+                </div>
+                <div class="field">
+                    <label for="settingPlainHostRoute">isPlainHostName 時のアクセス経路</label>
+                    <select id="settingPlainHostRoute"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="toolbar">
+                <h2 style="margin:0;">アクセス経路一覧</h2>
+                <div class="field" style="margin-left:auto;">
+                    <button type="button" class="primary" id="btnAddRoute">+ アクセス経路追加</button>
+                </div>
+            </div>
+            <div class="table-wrap" id="routesTableWrap"></div>
+        </div>
+    </section>
+
+    <!-- ============ テスト タブ ============ -->
+    <section id="tab-tests" class="tab-panel">
+        <div class="hint">
+            実際のネットワーク通信は行いません。Chromium系ブラウザがPACへ渡すURLの仕様（path/queryは通常除去される）を模したうえで、
+            生成した proxy.pac の <span class="mono">FindProxyForURL()</span> を実際に実行して判定します。
+        </div>
+
+        <div class="card">
+            <h2>URL単体テスト</h2>
+            <div class="field-row">
+                <div class="field" style="flex:3;">
+                    <label for="urlTestInput">判定したいURL</label>
+                    <input type="text" id="urlTestInput" placeholder="https://service.example.go.jp/login?id=123">
+                </div>
+                <div class="field" style="flex: 0 0 auto; align-self: flex-end;">
+                    <button type="button" class="primary" id="btnRunUrlTest">判定</button>
+                </div>
+            </div>
+            <div id="urlTestResult"></div>
+        </div>
+
+        <div class="card">
+            <div class="toolbar">
+                <h2 style="margin:0;">共通（ガード）テスト</h2>
+                <span class="text-muted" style="font-size:12px;">特定システムに属さない「対象外URLがDIRECTのままであること」等を確認するテストです。全件回帰テストに常に含まれます。</span>
+                <div class="field" style="margin-left:auto;">
+                    <button type="button" class="primary" id="btnAddGuardTest">+ ガードテスト追加</button>
+                </div>
+            </div>
+            <div class="table-wrap" id="guardTableWrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="toolbar">
+                <h2 style="margin:0;">全件回帰テスト</h2>
+                <div class="field" style="margin-left:auto;">
+                    <button type="button" class="primary" id="btnRunRegression">全件回帰テスト実行</button>
+                </div>
+            </div>
+            <div id="regressionResult"></div>
+        </div>
+    </section>
+
+    <!-- ============ PAC タブ ============ -->
+    <section id="tab-pac" class="tab-panel">
+        <div class="hint">
+            設定内容の検証・PACの構文検証・全件回帰テストを行ったうえで proxy.pac を生成します。
+            エラーがある場合は生成できません。警告や回帰テストのFAILがあっても出力自体は可能ですが、内容を確認のうえ本番投入してください。
+        </div>
+
+        <div class="card">
+            <button type="button" class="primary" id="btnGeneratePac">検証してPACを生成</button>
+        </div>
+
+        <div class="card">
+            <h2>入力検証結果</h2>
+            <div id="validationResult"></div>
+        </div>
+
+        <div class="card" id="syntaxCard" style="display:none;">
+            <h2>PAC構文検証結果</h2>
+            <div id="syntaxResult"></div>
+        </div>
+
+        <div class="card" id="regressionSummaryCard" style="display:none;">
+            <h2>回帰テスト結果（生成PACに対する実行結果）</h2>
+            <div id="pacRegressionResult"></div>
+        </div>
+
+        <div class="card" id="pacPreviewCard" style="display:none;">
+            <div class="toolbar">
+                <h2 style="margin:0;">生成された proxy.pac</h2>
+                <div class="field" style="margin-left:auto; display:flex; gap:8px;">
+                    <button type="button" id="btnCopyPac">コピー</button>
+                    <button type="button" class="primary" id="btnDownloadPac">proxy.pac をダウンロード</button>
+                </div>
+            </div>
+            <pre class="code-preview" id="pacCodePreview"></pre>
+        </div>
+    </section>
+
+</main>
+
+<!-- ============ システム編集ダイアログ ============ -->
+<dialog id="systemDialog">
+    <div class="dialog-head">
+        <strong id="systemDialogTitle">システムの追加</strong>
+        <button type="button" class="small" data-close-dialog="systemDialog">✕</button>
+    </div>
+    <div class="dialog-body">
+        <div class="field-row">
+            <div class="field" style="flex:2;">
+                <label for="sysFormName">システム名 *</label>
+                <input type="text" id="sysFormName" placeholder="例: サンプル国システムA">
+            </div>
+            <div class="field" style="flex:0 0 auto;">
+                <label>
+                    <input type="checkbox" id="sysFormEnabled" checked>
+                    有効
+                </label>
+            </div>
+        </div>
+        <div class="field">
+            <label for="sysFormNote">備考</label>
+            <input type="text" id="sysFormNote" placeholder="例: ○○業務で利用">
+        </div>
+        <div class="field">
+            <label for="sysFormRoute">求めるアクセス経路 *</label>
+            <select id="sysFormRoute"></select>
+        </div>
+
+        <div class="subsection-title">対象条件</div>
+        <div id="sysFormConditions"></div>
+        <button type="button" class="small" id="btnAddConditionRow">+ 条件を追加</button>
+
+        <div class="subsection-title">回帰テストURL</div>
+        <div id="sysFormTestUrls"></div>
+        <button type="button" class="small" id="btnAddTestUrlRow">+ テストURLを追加</button>
+
+        <div class="dialog-error" id="systemDialogError"></div>
+    </div>
+    <div class="dialog-foot">
+        <span class="text-muted" style="font-size:12px;">回帰テストURLの「期待経路」を未選択の場合はこのシステムのアクセス経路が使用されます。</span>
+        <div style="display:flex; gap:8px;">
+            <button type="button" data-close-dialog="systemDialog">キャンセル</button>
+            <button type="button" class="primary" id="btnSaveSystem">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ============ アクセス経路編集ダイアログ ============ -->
+<dialog id="routeDialog">
+    <div class="dialog-head">
+        <strong id="routeDialogTitle">アクセス経路の追加</strong>
+        <button type="button" class="small" data-close-dialog="routeDialog">✕</button>
+    </div>
+    <div class="dialog-body">
+        <div class="field">
+            <label for="routeFormName">表示名 *</label>
+            <input type="text" id="routeFormName" placeholder="例: 国システム用プロキシ">
+        </div>
+        <div class="field">
+            <label for="routeFormValue">PACでreturnする値 *</label>
+            <input type="text" id="routeFormValue" placeholder="例: PROXY 192.0.2.10:8080 または DIRECT">
+        </div>
+        <p class="text-muted" style="font-size:12px;">
+            複数経路のフェイルオーバーを指定する場合はセミコロンで区切ってください。<br>
+            例: <span class="mono">PROXY 192.0.2.10:8080; PROXY 192.0.2.11:8080; DIRECT</span>
+        </p>
+        <div class="dialog-error" id="routeDialogError"></div>
+    </div>
+    <div class="dialog-foot">
+        <span></span>
+        <div style="display:flex; gap:8px;">
+            <button type="button" data-close-dialog="routeDialog">キャンセル</button>
+            <button type="button" class="primary" id="btnSaveRoute">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ============ ガードテスト編集ダイアログ ============ -->
+<dialog id="guardDialog">
+    <div class="dialog-head">
+        <strong id="guardDialogTitle">ガードテストの追加</strong>
+        <button type="button" class="small" data-close-dialog="guardDialog">✕</button>
+    </div>
+    <div class="dialog-body">
+        <div class="field">
+            <label for="guardFormUrl">URL *</label>
+            <input type="text" id="guardFormUrl" placeholder="https://example-public-site.example.com/">
+        </div>
+        <div class="field">
+            <label for="guardFormRoute">期待するアクセス経路 *</label>
+            <select id="guardFormRoute"></select>
+        </div>
+        <div class="field">
+            <label for="guardFormNote">備考</label>
+            <input type="text" id="guardFormNote" placeholder="例: 対象外の一般サイト例">
+        </div>
+        <div class="dialog-error" id="guardDialogError"></div>
+    </div>
+    <div class="dialog-foot">
+        <span></span>
+        <div style="display:flex; gap:8px;">
+            <button type="button" data-close-dialog="guardDialog">キャンセル</button>
+            <button type="button" class="primary" id="btnSaveGuard">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================================
+ * 定数
+ * ========================================================================= */
+const APP_VERSION = "0.1.0";
+const FORMAT_VERSION = "1.0";
+const STORAGE_KEY = "iproxypac.state.v1";
+
+/* =========================================================================
+ * PACヘルパー関数（実際のPAC実行環境で提供されるものと同一の実装）
+ * 生成した proxy.pac 自体にはこれらの定義を含めない（実ブラウザがネイティブに提供するため）。
+ * テスト実行時のみ、これらの関数ソースを注入して FindProxyForURL を評価する。
+ * ========================================================================= */
+function shExpMatch(host, pattern) {
+    const escaped = String(pattern)
+        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".");
+    return new RegExp("^" + escaped + "$").test(host);
+}
+function dnsDomainIs(host, domain) {
+    return host.length >= domain.length &&
+        host.substring(host.length - domain.length) === domain;
+}
+function isPlainHostName(host) {
+    return host.indexOf(".") === -1;
+}
+
+function isValidIPv4(value) {
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(String(value).trim());
+    if (!m) return false;
+    for (let i = 1; i <= 4; i++) {
+        const part = m[i];
+        if (part.length > 1 && part.charAt(0) === "0") return false;
+        const n = Number(part);
+        if (n < 0 || n > 255) return false;
+    }
+    return true;
+}
+
+/* =========================================================================
+ * 対象条件タイプの定義（判別方法ごとの表示・PACコード生成・実判定ロジックを集約）
+ * ========================================================================= */
+const CONDITION_TYPES = {
+    hostExact: {
+        label: "ホスト完全一致",
+        placeholder: "service.example.go.jp",
+        describe: (v) => `host === "${v}"`,
+        genCode: (v) => `host === ${JSON.stringify(v)}`,
+        match: (host, v) => host === v
+    },
+    shExpMatch: {
+        label: "ワイルドカード一致 (shExpMatch)",
+        placeholder: "*.example.go.jp",
+        describe: (v) => `shExpMatch(host, "${v}")`,
+        genCode: (v) => `shExpMatch(host, ${JSON.stringify(v)})`,
+        match: (host, v) => shExpMatch(host, v)
+    },
+    dnsDomainIs: {
+        label: "ドメイン一致 (dnsDomainIs)",
+        placeholder: ".example.go.jp",
+        describe: (v) => `dnsDomainIs(host, "${v}")`,
+        genCode: (v) => `dnsDomainIs(host, ${JSON.stringify(v)})`,
+        match: (host, v) => dnsDomainIs(host, v)
+    },
+    ipExact: {
+        label: "IPアドレス完全一致",
+        placeholder: "192.0.2.10",
+        describe: (v) => `host === "${v}"`,
+        genCode: (v) => `host === ${JSON.stringify(v)}`,
+        match: (host, v) => host === v
+    }
+};
+
+/* =========================================================================
+ * ユーティリティ
+ * ========================================================================= */
+function genId(prefix) {
+    return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+    }[c]));
+}
+function deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+function el(html) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html.trim();
+    return tpl.content.firstElementChild;
+}
+
+/* =========================================================================
+ * データストア（状態管理）
+ * ========================================================================= */
+function createSampleState() {
+    return {
+        formatVersion: FORMAT_VERSION,
+        settings: {
+            defaultRouteId: "route_direct",
+            plainHostNameEnabled: true,
+            plainHostNameRouteId: "route_direct"
+        },
+        routes: [
+            { id: "route_direct", name: "DIRECT", value: "DIRECT" },
+            { id: "route_inet", name: "インターネットプロキシ", value: "PROXY 203.0.113.5:8080" },
+            { id: "route_gov", name: "国システム用プロキシ", value: "PROXY 192.0.2.10:8080" },
+            { id: "route_sub", name: "外部連携用プロキシ", value: "PROXY 198.51.100.20:8080" }
+        ],
+        systems: [
+            {
+                id: "sys_a", name: "サンプル国システムA", note: "○○業務で利用するサンプルシステムです。",
+                routeId: "route_gov", enabled: true,
+                conditions: [
+                    { id: "cond_a1", type: "hostExact", value: "service-a.example.go.jp" },
+                    { id: "cond_a2", type: "shExpMatch", value: "*.sub-a.example.go.jp" }
+                ],
+                testUrls: [
+                    { id: "turl_a1", url: "https://service-a.example.go.jp/login", expectedRouteId: "" },
+                    { id: "turl_a2", url: "https://portal.sub-a.example.go.jp/", expectedRouteId: "" },
+                    { id: "turl_a3", url: "https://not-matched.example.com/", expectedRouteId: "route_direct" }
+                ]
+            },
+            {
+                id: "sys_b", name: "サンプル国システムB", note: "△△業務で利用するサンプルシステムです。",
+                routeId: "route_sub", enabled: true,
+                conditions: [
+                    { id: "cond_b1", type: "dnsDomainIs", value: ".example-b.go.jp" }
+                ],
+                testUrls: [
+                    { id: "turl_b1", url: "https://apply.example-b.go.jp/form", expectedRouteId: "" }
+                ]
+            },
+            {
+                id: "sys_c", name: "サンプル外部連携システムC（無効化の例）",
+                note: "利用停止中システムの例。無効化するとPAC生成・回帰テストから除外されます。",
+                routeId: "route_inet", enabled: false,
+                conditions: [
+                    { id: "cond_c1", type: "ipExact", value: "192.0.2.50" }
+                ],
+                testUrls: []
+            }
+        ],
+        guardTests: [
+            { id: "guard_1", url: "https://public-site.example.com/", expectedRouteId: "route_direct", note: "対象外の一般サイトの例" },
+            { id: "guard_2", url: "http://internal-system.local/", expectedRouteId: "route_direct", note: "対象外の社内システムの例" }
+        ],
+        meta: { sample: true }
+    };
+}
+
+function createEmptyState() {
+    return {
+        formatVersion: FORMAT_VERSION,
+        settings: {
+            defaultRouteId: "route_direct",
+            plainHostNameEnabled: false,
+            plainHostNameRouteId: "route_direct"
+        },
+        routes: [
+            { id: "route_direct", name: "DIRECT", value: "DIRECT" }
+        ],
+        systems: [],
+        guardTests: [],
+        meta: { sample: false }
+    };
+}
+
+function normalizeState(loaded) {
+    const base = createEmptyState();
+    const s = Object.assign({}, base, loaded || {});
+    s.settings = Object.assign({}, base.settings, loaded && loaded.settings ? loaded.settings : {});
+    s.routes = Array.isArray(loaded && loaded.routes) ? loaded.routes : base.routes;
+    s.systems = Array.isArray(loaded && loaded.systems) ? loaded.systems : [];
+    s.guardTests = Array.isArray(loaded && loaded.guardTests) ? loaded.guardTests : [];
+    s.systems.forEach((sys) => {
+        if (!Array.isArray(sys.conditions)) sys.conditions = [];
+        if (!Array.isArray(sys.testUrls)) sys.testUrls = [];
+        if (typeof sys.enabled !== "boolean") sys.enabled = true;
+        if (!sys.id) sys.id = genId("sys");
+    });
+    s.meta = Object.assign({ sample: false }, loaded && loaded.meta ? loaded.meta : {});
+    s.formatVersion = FORMAT_VERSION;
+    return s;
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return normalizeState(JSON.parse(raw));
+    } catch (e) {
+        console.warn("保存済み設定の読み込みに失敗したため、サンプルデータを使用します。", e);
+    }
+    return createSampleState();
+}
+
+let state = loadState();
+
+function persistState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.warn("自動保存に失敗しました。", e);
+    }
+}
+
+/* =========================================================================
+ * ストア操作（CRUD）
+ * ========================================================================= */
+const Store = {
+    getRoute(id) { return state.routes.find((r) => r.id === id) || null; },
+    getSystem(id) { return state.systems.find((s) => s.id === id) || null; },
+    getGuardTest(id) { return state.guardTests.find((g) => g.id === id) || null; },
+
+    routeUsage(routeId) {
+        const usages = [];
+        if (state.settings.defaultRouteId === routeId) usages.push("既定経路");
+        if (state.settings.plainHostNameEnabled && state.settings.plainHostNameRouteId === routeId) {
+            usages.push("isPlainHostName共通ルール");
+        }
+        state.systems.forEach((sys) => {
+            if (sys.routeId === routeId) usages.push(`システム「${sys.name || "(名称未設定)"}」`);
+            (sys.testUrls || []).forEach((t) => {
+                if (t.expectedRouteId === routeId) usages.push(`システム「${sys.name || "(名称未設定)"}」のテストURL`);
+            });
+        });
+        state.guardTests.forEach((g) => {
+            if (g.expectedRouteId === routeId) usages.push("ガードテスト");
+        });
+        return usages;
+    },
+
+    upsertRoute(route) {
+        const idx = state.routes.findIndex((r) => r.id === route.id);
+        if (idx === -1) state.routes.push(route);
+        else state.routes[idx] = route;
+        persistState();
+    },
+    deleteRoute(id) {
+        state.routes = state.routes.filter((r) => r.id !== id);
+        persistState();
+    },
+
+    upsertSystem(sys) {
+        const idx = state.systems.findIndex((s) => s.id === sys.id);
+        if (idx === -1) state.systems.push(sys);
+        else state.systems[idx] = sys;
+        persistState();
+    },
+    deleteSystem(id) {
+        state.systems = state.systems.filter((s) => s.id !== id);
+        persistState();
+    },
+    moveSystem(id, direction) {
+        const idx = state.systems.findIndex((s) => s.id === id);
+        if (idx === -1) return;
+        const target = idx + direction;
+        if (target < 0 || target >= state.systems.length) return;
+        const tmp = state.systems[idx];
+        state.systems[idx] = state.systems[target];
+        state.systems[target] = tmp;
+        persistState();
+    },
+    toggleSystemEnabled(id) {
+        const sys = Store.getSystem(id);
+        if (!sys) return;
+        sys.enabled = !sys.enabled;
+        persistState();
+    },
+
+    upsertGuardTest(g) {
+        const idx = state.guardTests.findIndex((x) => x.id === g.id);
+        if (idx === -1) state.guardTests.push(g);
+        else state.guardTests[idx] = g;
+        persistState();
+    },
+    deleteGuardTest(id) {
+        state.guardTests = state.guardTests.filter((g) => g.id !== id);
+        persistState();
+    }
+};
+
+function routeValueById(routeId) {
+    const r = Store.getRoute(routeId);
+    return r ? r.value : null;
+}
+function routeNameById(routeId) {
+    const r = Store.getRoute(routeId);
+    return r ? r.name : "(未設定)";
+}
+
+/* =========================================================================
+ * 入力検証
+ * ========================================================================= */
+function validateRouteValue(value) {
+    if (!value || !value.trim()) return "値が空です。";
+    const segments = value.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+    if (segments.length === 0) return "値が空です。";
+    for (const seg of segments) {
+        if (seg === "DIRECT") continue;
+        const m = /^(PROXY|SOCKS5|SOCKS)\s+([^\s:]+):(\d{1,5})$/.exec(seg);
+        if (!m) return `不正な形式です: "${seg}" (例: PROXY host:port または DIRECT)`;
+        const port = Number(m[3]);
+        if (port < 1 || port > 65535) return `ポート番号が不正です: "${seg}"`;
+    }
+    return null;
+}
+
+function validateConfig(currentState) {
+    const errors = [];
+    const warnings = [];
+    const routeIds = new Set(currentState.routes.map((r) => r.id));
+
+    currentState.routes.forEach((route) => {
+        const problem = validateRouteValue(route.value);
+        if (problem) {
+            errors.push({ scope: "route", routeId: route.id, message: `アクセス経路「${route.name || "(名称未設定)"}」のreturn値が不正です: ${problem}` });
+        }
+    });
+
+    if (!currentState.settings.defaultRouteId || !routeIds.has(currentState.settings.defaultRouteId)) {
+        errors.push({ scope: "settings", message: "既定経路が未設定、または存在しないアクセス経路を参照しています。" });
+    }
+    if (currentState.settings.plainHostNameEnabled &&
+        (!currentState.settings.plainHostNameRouteId || !routeIds.has(currentState.settings.plainHostNameRouteId))) {
+        errors.push({ scope: "settings", message: "isPlainHostName共通ルールのアクセス経路が未設定、または存在しません。" });
+    }
+
+    const seenConditionCode = new Map();
+
+    currentState.systems.forEach((sys) => {
+        const prefix = `システム「${sys.name || "(名称未設定)"}」`;
+        const bucket = sys.enabled ? errors : warnings;
+
+        if (!sys.name || !sys.name.trim()) {
+            bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: システム名が未入力です。` });
+        }
+        if (!sys.routeId || !routeIds.has(sys.routeId)) {
+            bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: 参照しているアクセス経路が存在しません。` });
+        }
+        if (!sys.conditions || sys.conditions.length === 0) {
+            bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: 対象条件が1件も設定されていません。` });
+        }
+
+        const seenInSystem = new Set();
+        (sys.conditions || []).forEach((cond) => {
+            const type = CONDITION_TYPES[cond.type];
+            if (!cond.value || !cond.value.trim()) {
+                bucket.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `${prefix}: 条件の値が未入力です。` });
+                return;
+            }
+            const value = cond.value.trim();
+            if (cond.type === "ipExact" && !isValidIPv4(value)) {
+                bucket.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `${prefix}: IPアドレス「${value}」の形式が不正です。` });
+            }
+            if (cond.type === "dnsDomainIs" && value.charAt(0) !== ".") {
+                warnings.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `${prefix}: dnsDomainIsの値「${value}」は先頭がピリオドではありません。意図しない一致になる可能性があります。` });
+            }
+            if (!type) return;
+            const code = type.genCode(value);
+
+            if (seenInSystem.has(code)) {
+                warnings.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `${prefix}: 条件「${type.describe(value)}」が同一システム内で重複しています。` });
+            }
+            seenInSystem.add(code);
+
+            if (sys.enabled) {
+                if (seenConditionCode.has(code)) {
+                    const prev = seenConditionCode.get(code);
+                    if (prev.routeId !== sys.routeId) {
+                        errors.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `条件「${type.describe(value)}」が「${prev.systemName}」と「${sys.name}」で異なるアクセス経路に割り当てられています。` });
+                    } else {
+                        warnings.push({ scope: "condition", systemId: sys.id, conditionId: cond.id, message: `条件「${type.describe(value)}」が「${prev.systemName}」と重複しています（同一経路のため実害はありませんが整理を推奨します）。` });
+                    }
+                } else {
+                    seenConditionCode.set(code, { systemId: sys.id, systemName: sys.name, routeId: sys.routeId });
+                }
+            }
+        });
+
+        (sys.testUrls || []).forEach((t) => {
+            if (!t.url || !t.url.trim()) {
+                warnings.push({ scope: "testUrl", systemId: sys.id, testUrlId: t.id, message: `${prefix}: テストURLが未入力の項目があります。` });
+            }
+            if (t.expectedRouteId && !routeIds.has(t.expectedRouteId)) {
+                warnings.push({ scope: "testUrl", systemId: sys.id, testUrlId: t.id, message: `${prefix}: テストURL「${t.url}」の期待経路が存在しません。` });
+            }
+        });
+    });
+
+    currentState.guardTests.forEach((g) => {
+        if (!g.url || !g.url.trim()) {
+            warnings.push({ scope: "guard", guardId: g.id, message: "ガードテストのURLが未入力です。" });
+        }
+        if (!g.expectedRouteId || !routeIds.has(g.expectedRouteId)) {
+            warnings.push({ scope: "guard", guardId: g.id, message: `ガードテスト「${g.url}」の期待経路が未設定、または存在しません。` });
+        }
+    });
+
+    warnings.push(...detectConflicts(currentState));
+
+    return { errors, warnings };
+}
+
+/* 重複・競合・広すぎるワイルドカードの検出（ヒューリスティック、完全な静的解析ではない） */
+function detectConflicts(currentState) {
+    const warnings = [];
+    const enabledSystems = currentState.systems.filter((s) => s.enabled);
+
+    function probeHosts(cond) {
+        const v = (cond.value || "").trim();
+        if (!v) return [];
+        if (cond.type === "hostExact" || cond.type === "ipExact") return [v];
+        if (cond.type === "shExpMatch") {
+            return [v.replace(/\*/g, "probe").replace(/\?/g, "x")];
+        }
+        if (cond.type === "dnsDomainIs") {
+            return [v.charAt(0) === "." ? ("probe" + v) : ("probe." + v)];
+        }
+        return [];
+    }
+
+    for (let i = 0; i < enabledSystems.length; i++) {
+        const earlier = enabledSystems[i];
+        for (const laterCond of []) { /* placeholder to keep structure explicit */ }
+        for (let j = i + 1; j < enabledSystems.length; j++) {
+            const later = enabledSystems[j];
+            if (earlier.routeId === later.routeId) continue;
+            (later.conditions || []).forEach((lc) => {
+                if (!lc.value || !lc.value.trim()) return;
+                const hosts = probeHosts(lc);
+                (earlier.conditions || []).forEach((ec) => {
+                    if (!ec.value || !ec.value.trim()) return;
+                    const ecType = CONDITION_TYPES[ec.type];
+                    if (!ecType) return;
+                    hosts.forEach((h) => {
+                        if (ecType.match(h, ec.value.trim())) {
+                            warnings.push({
+                                scope: "conflict",
+                                systemId: later.id,
+                                conditionId: lc.id,
+                                message: `優先順位の高い「${earlier.name}」の条件「${ecType.describe(ec.value.trim())}」が、「${later.name}」の条件「${CONDITION_TYPES[lc.type].describe(lc.value.trim())}」を覆っている可能性があります（後者のルールが到達しない可能性）。`
+                            });
+                        }
+                    });
+                });
+            });
+        }
+    }
+
+    currentState.systems.forEach((sys) => {
+        (sys.conditions || []).forEach((cond) => {
+            const v = (cond.value || "").trim();
+            if (!v) return;
+            if (cond.type === "shExpMatch") {
+                const bare = v.replace(/\*/g, "").replace(/\./g, "");
+                if (bare.length <= 3) {
+                    warnings.push({ scope: "broad", systemId: sys.id, conditionId: cond.id, message: `システム「${sys.name}」の条件「${CONDITION_TYPES.shExpMatch.describe(v)}」は対象範囲が広すぎる可能性があります。` });
+                }
+            }
+            if (cond.type === "dnsDomainIs") {
+                const segments = v.split(".").filter((x) => x.length > 0);
+                if (segments.length <= 1) {
+                    warnings.push({ scope: "broad", systemId: sys.id, conditionId: cond.id, message: `システム「${sys.name}」の条件「${CONDITION_TYPES.dnsDomainIs.describe(v)}」は対象範囲が広すぎる可能性があります。` });
+                }
+            }
+        });
+    });
+
+    const signatures = new Map();
+    currentState.systems.forEach((sys) => {
+        if (!sys.enabled || !sys.conditions || sys.conditions.length === 0) return;
+        const sig = sys.conditions
+            .filter((c) => c.value && c.value.trim())
+            .map((c) => (CONDITION_TYPES[c.type] ? CONDITION_TYPES[c.type].genCode(c.value.trim()) : ""))
+            .sort()
+            .join("|");
+        if (!sig) return;
+        if (signatures.has(sig)) {
+            warnings.push({ scope: "duplicateSystem", systemId: sys.id, message: `システム「${sys.name}」と「${signatures.get(sig)}」は条件セットが完全に一致しています。統合を検討してください。` });
+        } else {
+            signatures.set(sig, sys.name);
+        }
+    });
+
+    return warnings;
+}
+
+/* =========================================================================
+ * PAC生成
+ * ========================================================================= */
+function generateSystemBlock(sys, indent) {
+    const conds = sys.conditions
+        .filter((c) => c.value && c.value.trim())
+        .map((c) => CONDITION_TYPES[c.type].genCode(c.value.trim()));
+    const route = Store.getRoute(sys.routeId);
+    const lines = [];
+    lines.push(`${indent}// ${sys.name}`);
+    if (conds.length === 1) {
+        lines.push(`${indent}if (${conds[0]}) {`);
+    } else {
+        lines.push(`${indent}if (`);
+        conds.forEach((c, i) => {
+            lines.push(`${indent}    ${c}${i < conds.length - 1 ? " ||" : ""}`);
+        });
+        lines.push(`${indent})  {`.replace(")  {", ") {"));
+    }
+    lines.push(`${indent}    return ${JSON.stringify(route.value)};`);
+    lines.push(`${indent}}`);
+    lines.push("");
+    return lines;
+}
+
+function generatePac(currentState) {
+    const lines = [];
+    lines.push("function FindProxyForURL(url, host) {");
+
+    if (currentState.settings.plainHostNameEnabled) {
+        const route = Store.getRoute(currentState.settings.plainHostNameRouteId);
+        lines.push("    // 共通ルール: プレーンホスト名（ドメイン省略形式）は個別システム判定より先に処理する");
+        lines.push("    if (isPlainHostName(host)) {");
+        lines.push(`        return ${JSON.stringify(route.value)};`);
+        lines.push("    }");
+        lines.push("");
+    }
+
+    currentState.systems
+        .filter((s) => s.enabled)
+        .forEach((sys) => {
+            lines.push(...generateSystemBlock(sys, "    "));
+        });
+
+    const defaultRoute = Store.getRoute(currentState.settings.defaultRouteId);
+    lines.push("    // 既定経路");
+    lines.push(`    return ${JSON.stringify(defaultRoute.value)};`);
+    lines.push("}");
+    lines.push("");
+    return lines.join("\n");
+}
+
+/* =========================================================================
+ * PAC実行エンジン（構文検証 + 実行）
+ * ========================================================================= */
+function compileExecutablePac(pacCode) {
+    const helperSource = [shExpMatch, dnsDomainIs, isPlainHostName].map((f) => f.toString()).join("\n\n");
+    const fullSource = helperSource + "\n\n" + pacCode + "\n\nreturn (typeof FindProxyForURL === 'function') ? FindProxyForURL : null;";
+    try {
+        const factory = new Function(fullSource);
+        const fn = factory();
+        if (typeof fn !== "function") {
+            return { ok: false, error: "FindProxyForURL が関数として定義されませんでした。" };
+        }
+        return { ok: true, fn };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
+/* =========================================================================
+ * 構造化ルールからの期待結果評価（説明表示・整合性チェック用）
+ * ========================================================================= */
+function evaluateStructured(currentState, host) {
+    if (currentState.settings.plainHostNameEnabled && isPlainHostName(host)) {
+        return {
+            route: routeValueById(currentState.settings.plainHostNameRouteId),
+            systemId: null,
+            systemName: "(共通ルール) isPlainHostName",
+            conditionDesc: "isPlainHostName(host)"
+        };
+    }
+    for (const sys of currentState.systems) {
+        if (!sys.enabled) continue;
+        for (const cond of sys.conditions) {
+            const type = CONDITION_TYPES[cond.type];
+            if (!type || !cond.value || !cond.value.trim()) continue;
+            if (type.match(host, cond.value.trim())) {
+                return {
+                    route: routeValueById(sys.routeId),
+                    systemId: sys.id,
+                    systemName: sys.name,
+                    conditionDesc: type.describe(cond.value.trim())
+                };
+            }
+        }
+    }
+    return {
+        route: routeValueById(currentState.settings.defaultRouteId),
+        systemId: null,
+        systemName: "(既定経路)",
+        conditionDesc: null
+    };
+}
+
+/* =========================================================================
+ * Chromium想定のURL→PAC入力変換
+ * ========================================================================= */
+function toChromiumPacInputs(rawUrl) {
+    let normalized = rawUrl.trim();
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(normalized)) {
+        normalized = "https://" + normalized;
+    }
+    let u;
+    try {
+        u = new URL(normalized);
+    } catch (e) {
+        throw new Error("URLの形式が不正です。");
+    }
+    const host = u.hostname;
+    const pacUrl = `${u.protocol}//${u.host}/`;
+    return { pacUrl, host, normalizedUrl: normalized };
+}
+
+/* =========================================================================
+ * テスト実行
+ * ========================================================================= */
+function runUrlTest(currentState, rawUrl, compiled) {
+    const { pacUrl, host } = toChromiumPacInputs(rawUrl);
+    const structured = evaluateStructured(currentState, host);
+    let executedRoute = null;
+    let execError = null;
+    if (compiled && compiled.ok) {
+        try {
+            executedRoute = compiled.fn(pacUrl, host);
+        } catch (e) {
+            execError = e.message;
+        }
+    } else if (compiled) {
+        execError = compiled.error;
+    }
+    const mismatch = !execError && compiled && compiled.ok && executedRoute !== structured.route;
+    return { rawUrl, pacUrl, host, structured, executedRoute, execError, mismatch };
+}
+
+function runRegression(currentState, compiled) {
+    const results = [];
+
+    currentState.systems.forEach((sys) => {
+        if (!sys.enabled) return;
+        (sys.testUrls || []).forEach((t) => {
+            if (!t.url || !t.url.trim()) return;
+            const expectedRouteId = t.expectedRouteId || sys.routeId;
+            const expected = routeValueById(expectedRouteId);
+            let r;
+            try {
+                r = runUrlTest(currentState, t.url, compiled);
+            } catch (e) {
+                results.push({ scope: "system", systemId: sys.id, systemName: sys.name, url: t.url, expected, actual: null, error: e.message, pass: false });
+                return;
+            }
+            const actual = r.execError ? null : r.executedRoute;
+            const pass = !r.execError && actual === expected;
+            results.push({
+                scope: "system", systemId: sys.id, systemName: sys.name, url: t.url,
+                expected, actual, error: r.execError, pass,
+                matchedSystemName: r.structured.systemName, matchedCondition: r.structured.conditionDesc
+            });
+        });
+    });
+
+    currentState.guardTests.forEach((g) => {
+        if (!g.url || !g.url.trim()) return;
+        const expected = routeValueById(g.expectedRouteId);
+        let r;
+        try {
+            r = runUrlTest(currentState, g.url, compiled);
+        } catch (e) {
+            results.push({ scope: "guard", guardId: g.id, url: g.url, expected, actual: null, error: e.message, pass: false });
+            return;
+        }
+        const actual = r.execError ? null : r.executedRoute;
+        const pass = !r.execError && actual === expected;
+        results.push({
+            scope: "guard", guardId: g.id, url: g.url,
+            expected, actual, error: r.execError, pass,
+            matchedSystemName: r.structured.systemName, matchedCondition: r.structured.conditionDesc
+        });
+    });
+
+    return results;
+}
+
+function summarizeRegression(results) {
+    const total = results.length;
+    const pass = results.filter((r) => r.pass).length;
+    const fail = total - pass;
+    const bySystem = new Map();
+    results.filter((r) => r.scope === "system").forEach((r) => {
+        if (!bySystem.has(r.systemId)) {
+            bySystem.set(r.systemId, { systemId: r.systemId, name: r.systemName, total: 0, pass: 0 });
+        }
+        const entry = bySystem.get(r.systemId);
+        entry.total++;
+        if (r.pass) entry.pass++;
+    });
+    const guardResults = results.filter((r) => r.scope === "guard");
+    const guardPass = guardResults.filter((r) => r.pass).length;
+    return {
+        total, pass, fail,
+        bySystem: Array.from(bySystem.values()),
+        guardTotal: guardResults.length,
+        guardPass,
+        failures: results.filter((r) => !r.pass),
+        results
+    };
+}
+
+/* =========================================================================
+ * IO（JSON保存・復元、proxy.pacダウンロード）
+ * ========================================================================= */
+function downloadTextFile(filename, text) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function exportStateAsJSON() {
+    const payload = {
+        formatVersion: FORMAT_VERSION,
+        appVersion: APP_VERSION,
+        exportedAt: new Date().toISOString(),
+        settings: state.settings,
+        routes: state.routes,
+        systems: state.systems,
+        guardTests: state.guardTests
+    };
+    downloadTextFile("proxypac-config.json", JSON.stringify(payload, null, 4));
+    showToast("設定JSONを書き出しました。");
+}
+
+function importStateFromJSON(text) {
+    let parsed;
+    try {
+        parsed = JSON.parse(text);
+    } catch (e) {
+        alert("JSONの解析に失敗しました。ファイル形式を確認してください。");
+        return;
+    }
+    if (!parsed || (typeof parsed !== "object") || !Array.isArray(parsed.systems) || !Array.isArray(parsed.routes)) {
+        alert("必要な項目（routes / systems）が見つからないため読み込めません。");
+        return;
+    }
+    if (parsed.formatVersion && parsed.formatVersion !== FORMAT_VERSION) {
+        const proceed = confirm(`このJSONの formatVersion (${parsed.formatVersion}) は現在のツールのバージョン (${FORMAT_VERSION}) と異なります。読み込みを続けますか？`);
+        if (!proceed) return;
+    }
+    if (!confirm("現在の設定を上書きして読み込みます。よろしいですか？")) return;
+    state = normalizeState(parsed);
+    persistState();
+    uiState.lastRegression = null;
+    uiState.regressionRun = null;
+    renderAll();
+    showToast("設定JSONを読み込みました。");
+}
+
+function clearSampleData() {
+    if (!confirm("サンプルデータ（システム・アクセス経路・ガードテスト）をすべて削除し、初期状態に戻します。よろしいですか？")) return;
+    state = createEmptyState();
+    persistState();
+    uiState.lastRegression = null;
+    uiState.regressionRun = null;
+    renderAll();
+    showToast("サンプルデータを削除しました。");
+}
+
+/* =========================================================================
+ * UI: 共通
+ * ========================================================================= */
+let uiState = {
+    activeTab: "systems",
+    systemFilter: { name: "", enabled: "all", result: "all" },
+    lastUrlTestResult: null,
+    lastRegression: null,
+    regressionRun: null
+};
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+function switchTab(tabName) {
+    uiState.activeTab = tabName;
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tabName));
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tabName));
+}
+
+function routeOptionsHtml(selectedId, includeBlank, blankLabel) {
+    let html = "";
+    if (includeBlank) html += `<option value="">${escapeHtml(blankLabel || "(システムの既定経路を使用)")}</option>`;
+    state.routes.forEach((r) => {
+        html += `<option value="${escapeHtml(r.id)}" ${r.id === selectedId ? "selected" : ""}>${escapeHtml(r.name)}</option>`;
+    });
+    return html;
+}
+
+function conditionTypeOptionsHtml(selected) {
+    return Object.keys(CONDITION_TYPES).map((key) => {
+        return `<option value="${key}" ${key === selected ? "selected" : ""}>${escapeHtml(CONDITION_TYPES[key].label)}</option>`;
+    }).join("");
+}
+
+function renderAll() {
+    renderSampleBanner();
+    renderSystemsTab();
+    renderRoutesTab();
+    renderTestsTab();
+    renderPacTab();
+}
+
+function renderSampleBanner() {
+    const box = document.getElementById("sampleBannerSystems");
+    if (state.meta && state.meta.sample) {
+        box.innerHTML = `
+            <div class="sample-banner">
+                <span>このデータは初期サンプルです。実在のシステム名・IPアドレスは含まれていません。用途を確認後、不要であれば削除してください。</span>
+                <button type="button" id="btnClearSample">サンプルデータを削除</button>
+            </div>`;
+        document.getElementById("btnClearSample").addEventListener("click", clearSampleData);
+    } else {
+        box.innerHTML = "";
+    }
+}
+
+/* =========================================================================
+ * UI: システム タブ
+ * ========================================================================= */
+function getRegressionStatusForSystem(systemId) {
+    if (!uiState.lastRegression) return null;
+    return uiState.lastRegression.bySystem.find((e) => e.systemId === systemId) || null;
+}
+
+function renderSystemsTab() {
+    const wrap = document.getElementById("systemsTableWrap");
+    const filter = uiState.systemFilter;
+
+    let list = state.systems.map((s, idx) => ({ sys: s, idx }));
+    if (filter.name.trim()) {
+        const q = filter.name.trim().toLowerCase();
+        list = list.filter((x) => (x.sys.name || "").toLowerCase().includes(q));
+    }
+    if (filter.enabled === "enabled") list = list.filter((x) => x.sys.enabled);
+    if (filter.enabled === "disabled") list = list.filter((x) => !x.sys.enabled);
+    if (filter.result !== "all") {
+        list = list.filter((x) => {
+            const status = getRegressionStatusForSystem(x.sys.id);
+            if (filter.result === "untested") return !status || status.total === 0;
+            if (!status || status.total === 0) return false;
+            if (filter.result === "pass") return status.pass === status.total;
+            if (filter.result === "fail") return status.pass < status.total;
+            return true;
+        });
+    }
+
+    if (state.systems.length === 0) {
+        wrap.innerHTML = `<div class="empty-note">システムが登録されていません。「+ システム追加」から登録してください。</div>`;
+        return;
+    }
+    if (list.length === 0) {
+        wrap.innerHTML = `<div class="empty-note">条件に一致するシステムがありません。</div>`;
+        return;
+    }
+
+    let html = `<table><thead><tr>
+        <th>優先順位</th><th>有効</th><th>システム名</th><th>アクセス経路</th>
+        <th>条件</th><th>テストURL数</th><th>回帰結果</th><th class="col-actions">操作</th>
+    </tr></thead><tbody>`;
+
+    list.forEach(({ sys, idx }) => {
+        const status = getRegressionStatusForSystem(sys.id);
+        let statusBadge = `<span class="badge badge-neutral">未実行</span>`;
+        if (status) {
+            if (status.total === 0) statusBadge = `<span class="badge badge-neutral">テストURLなし</span>`;
+            else if (status.pass === status.total) statusBadge = `<span class="badge badge-pass">✓ PASS ${status.pass}/${status.total}</span>`;
+            else statusBadge = `<span class="badge badge-fail">✗ FAIL ${status.total - status.pass}/${status.total}</span>`;
+        }
+        const condSummary = (sys.conditions || []).slice(0, 3).map((c) => {
+            const t = CONDITION_TYPES[c.type];
+            return `<span class="condition-tag">${escapeHtml(t ? t.describe(c.value || "") : c.value || "")}</span>`;
+        }).join("") + (sys.conditions.length > 3 ? `<span class="text-muted" style="font-size:11px;">他 ${sys.conditions.length - 3} 件</span>` : "");
+
+        html += `<tr class="${sys.enabled ? "" : "disabled-row"}" data-system-id="${escapeHtml(sys.id)}">
+            <td>
+                <div class="priority-controls">
+                    <button type="button" class="small" data-action="move-up" ${idx === 0 ? "disabled" : ""} title="優先順位を上げる">▲</button>
+                    <span>${idx + 1}</span>
+                    <button type="button" class="small" data-action="move-down" ${idx === state.systems.length - 1 ? "disabled" : ""} title="優先順位を下げる">▼</button>
+                </div>
+            </td>
+            <td><span class="badge ${sys.enabled ? "badge-on" : "badge-off"}" style="cursor:pointer;" data-action="toggle-enabled" title="クリックで切替">${sys.enabled ? "● 有効" : "○ 無効"}</span></td>
+            <td class="wrap-cell"><strong>${escapeHtml(sys.name || "(名称未設定)")}</strong>${sys.note ? `<br><span class="text-muted" style="font-size:12px;">${escapeHtml(sys.note)}</span>` : ""}</td>
+            <td class="wrap-cell">${escapeHtml(routeNameById(sys.routeId))}</td>
+            <td class="wrap-cell">${condSummary || `<span class="text-muted">未設定</span>`}</td>
+            <td>${sys.testUrls.length}</td>
+            <td>${statusBadge}</td>
+            <td class="col-actions">
+                <button type="button" class="small" data-action="edit">編集</button>
+                <button type="button" class="small danger" data-action="delete">削除</button>
+            </td>
+        </tr>`;
+    });
+    html += "</tbody></table>";
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll("tr[data-system-id]").forEach((row) => {
+        const id = row.dataset.systemId;
+        row.querySelector('[data-action="move-up"]').addEventListener("click", () => { Store.moveSystem(id, -1); renderAll(); });
+        row.querySelector('[data-action="move-down"]').addEventListener("click", () => { Store.moveSystem(id, 1); renderAll(); });
+        row.querySelector('[data-action="toggle-enabled"]').addEventListener("click", () => { Store.toggleSystemEnabled(id); renderAll(); });
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => openSystemDialog(id));
+        row.querySelector('[data-action="delete"]').addEventListener("click", () => {
+            const sys = Store.getSystem(id);
+            if (!confirm(`システム「${sys.name || "(名称未設定)"}」を削除します。よろしいですか？`)) return;
+            Store.deleteSystem(id);
+            renderAll();
+        });
+    });
+}
+
+/* --- システム編集ダイアログ --- */
+let editingConditionCounter = 0;
+let editingTestUrlCounter = 0;
+
+function openSystemDialog(systemId) {
+    const existing = systemId ? deepClone(Store.getSystem(systemId)) : null;
+    const editing = existing || { id: genId("sys"), name: "", note: "", routeId: state.routes[0] ? state.routes[0].id : "", enabled: true, conditions: [], testUrls: [] };
+
+    document.getElementById("systemDialogTitle").textContent = existing ? "システムの編集" : "システムの追加";
+    document.getElementById("sysFormName").value = editing.name || "";
+    document.getElementById("sysFormNote").value = editing.note || "";
+    document.getElementById("sysFormEnabled").checked = editing.enabled !== false;
+    document.getElementById("sysFormRoute").innerHTML = routeOptionsHtml(editing.routeId, false);
+
+    const condContainer = document.getElementById("sysFormConditions");
+    condContainer.innerHTML = "";
+    condContainer.dataset.systemId = editing.id;
+    if (editing.conditions.length === 0) editing.conditions.push({ id: genId("cond"), type: "hostExact", value: "" });
+    editing.conditions.forEach((c) => addConditionRow(c));
+
+    const testUrlContainer = document.getElementById("sysFormTestUrls");
+    testUrlContainer.innerHTML = "";
+    editing.testUrls.forEach((t) => addTestUrlRow(t));
+
+    const dialog = document.getElementById("systemDialog");
+    dialog.dataset.systemId = editing.id;
+    hideDialogError("systemDialogError");
+    dialog.showModal();
+}
+
+function addConditionRow(cond) {
+    const row = el(`
+        <div class="dyn-row condition-row" data-row-id="${escapeHtml(cond.id)}">
+            <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
+            <input type="text" class="cond-value" placeholder="${escapeHtml(CONDITION_TYPES[cond.type].placeholder)}" value="${escapeHtml(cond.value || "")}">
+            <button type="button" class="small danger remove-row" title="この条件を削除">削除</button>
+        </div>`);
+    row.querySelector(".cond-type").addEventListener("change", (e) => {
+        row.querySelector(".cond-value").placeholder = CONDITION_TYPES[e.target.value].placeholder;
+    });
+    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    document.getElementById("sysFormConditions").appendChild(row);
+}
+
+function addTestUrlRow(t) {
+    const row = el(`
+        <div class="dyn-row testurl-row" data-row-id="${escapeHtml(t.id)}">
+            <input type="text" class="turl-url" placeholder="https://service.example.go.jp/" value="${escapeHtml(t.url || "")}" style="flex:2;">
+            <select class="turl-route">${routeOptionsHtml(t.expectedRouteId, true)}</select>
+            <button type="button" class="small danger remove-row" title="このテストURLを削除">削除</button>
+        </div>`);
+    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    document.getElementById("sysFormTestUrls").appendChild(row);
+}
+
+function showDialogError(elId, message) {
+    const box = document.getElementById(elId);
+    box.textContent = message;
+    box.classList.add("show");
+}
+function hideDialogError(elId) {
+    const box = document.getElementById(elId);
+    box.textContent = "";
+    box.classList.remove("show");
+}
+
+function saveSystemFromDialog() {
+    const dialog = document.getElementById("systemDialog");
+    const id = dialog.dataset.systemId;
+    const name = document.getElementById("sysFormName").value.trim();
+    const note = document.getElementById("sysFormNote").value.trim();
+    const enabled = document.getElementById("sysFormEnabled").checked;
+    const routeId = document.getElementById("sysFormRoute").value;
+
+    if (!name) {
+        showDialogError("systemDialogError", "システム名を入力してください。");
+        return;
+    }
+    if (!routeId) {
+        showDialogError("systemDialogError", "アクセス経路を選択してください。");
+        return;
+    }
+
+    const conditions = Array.from(document.querySelectorAll("#sysFormConditions .condition-row")).map((row) => ({
+        id: row.dataset.rowId,
+        type: row.querySelector(".cond-type").value,
+        value: row.querySelector(".cond-value").value.trim()
+    })).filter((c) => c.value !== "");
+
+    if (conditions.length === 0) {
+        showDialogError("systemDialogError", "対象条件を少なくとも1件、値を入力して登録してください。");
+        return;
+    }
+
+    const testUrls = Array.from(document.querySelectorAll("#sysFormTestUrls .testurl-row")).map((row) => ({
+        id: row.dataset.rowId,
+        url: row.querySelector(".turl-url").value.trim(),
+        expectedRouteId: row.querySelector(".turl-route").value
+    })).filter((t) => t.url !== "");
+
+    Store.upsertSystem({ id, name, note, routeId, enabled, conditions, testUrls });
+    hideDialogError("systemDialogError");
+    dialog.close();
+    renderAll();
+    showToast("システムを保存しました。");
+}
+
+/* =========================================================================
+ * UI: アクセス経路 タブ
+ * ========================================================================= */
+function renderRoutesTab() {
+    const defaultSel = document.getElementById("settingDefaultRoute");
+    defaultSel.innerHTML = routeOptionsHtml(state.settings.defaultRouteId, false);
+    defaultSel.onchange = () => { state.settings.defaultRouteId = defaultSel.value; persistState(); };
+
+    const plainEnabled = document.getElementById("settingPlainHostEnabled");
+    plainEnabled.checked = !!state.settings.plainHostNameEnabled;
+    plainEnabled.onchange = () => { state.settings.plainHostNameEnabled = plainEnabled.checked; persistState(); };
+
+    const plainRoute = document.getElementById("settingPlainHostRoute");
+    plainRoute.innerHTML = routeOptionsHtml(state.settings.plainHostNameRouteId, false);
+    plainRoute.onchange = () => { state.settings.plainHostNameRouteId = plainRoute.value; persistState(); };
+
+    const wrap = document.getElementById("routesTableWrap");
+    if (state.routes.length === 0) {
+        wrap.innerHTML = `<div class="empty-note">アクセス経路が登録されていません。</div>`;
+        return;
+    }
+    let html = `<table><thead><tr><th>表示名</th><th>PACでreturnする値</th><th>使用箇所</th><th class="col-actions">操作</th></tr></thead><tbody>`;
+    state.routes.forEach((r) => {
+        const usages = Store.routeUsage(r.id);
+        html += `<tr data-route-id="${escapeHtml(r.id)}">
+            <td>${escapeHtml(r.name)}</td>
+            <td class="wrap-cell mono">${escapeHtml(r.value)}</td>
+            <td>${usages.length ? `<span class="badge badge-neutral">${usages.length} 箇所</span>` : `<span class="text-muted">未使用</span>`}</td>
+            <td class="col-actions">
+                <button type="button" class="small" data-action="edit">編集</button>
+                <button type="button" class="small danger" data-action="delete">削除</button>
+            </td>
+        </tr>`;
+    });
+    html += "</tbody></table>";
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll("tr[data-route-id]").forEach((row) => {
+        const id = row.dataset.routeId;
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => openRouteDialog(id));
+        row.querySelector('[data-action="delete"]').addEventListener("click", () => {
+            const usages = Store.routeUsage(id);
+            if (usages.length > 0) {
+                alert(`このアクセス経路は以下で使用されているため削除できません:\n\n${usages.join("\n")}\n\n先に参照を変更してください。`);
+                return;
+            }
+            const route = Store.getRoute(id);
+            if (!confirm(`アクセス経路「${route.name}」を削除します。よろしいですか？`)) return;
+            Store.deleteRoute(id);
+            renderAll();
+        });
+    });
+}
+
+function openRouteDialog(routeId) {
+    const existing = routeId ? Store.getRoute(routeId) : null;
+    document.getElementById("routeDialogTitle").textContent = existing ? "アクセス経路の編集" : "アクセス経路の追加";
+    document.getElementById("routeFormName").value = existing ? existing.name : "";
+    document.getElementById("routeFormValue").value = existing ? existing.value : "";
+    const dialog = document.getElementById("routeDialog");
+    dialog.dataset.routeId = existing ? existing.id : genId("route");
+    hideDialogError("routeDialogError");
+    dialog.showModal();
+}
+
+function saveRouteFromDialog() {
+    const dialog = document.getElementById("routeDialog");
+    const id = dialog.dataset.routeId;
+    const name = document.getElementById("routeFormName").value.trim();
+    const value = document.getElementById("routeFormValue").value.trim();
+
+    if (!name) {
+        showDialogError("routeDialogError", "表示名を入力してください。");
+        return;
+    }
+    const problem = validateRouteValue(value);
+    if (problem) {
+        showDialogError("routeDialogError", problem);
+        return;
+    }
+    Store.upsertRoute({ id, name, value });
+    hideDialogError("routeDialogError");
+    dialog.close();
+    renderAll();
+    showToast("アクセス経路を保存しました。");
+}
+
+/* =========================================================================
+ * UI: テスト タブ
+ * ========================================================================= */
+function renderTestsTab() {
+    renderGuardTable();
+    renderUrlTestResult();
+    renderRegressionResult("regressionResult");
+}
+
+function renderUrlTestResult() {
+    const box = document.getElementById("urlTestResult");
+    const r = uiState.lastUrlTestResult;
+    if (!r) {
+        box.innerHTML = "";
+        return;
+    }
+    if (r.error) {
+        box.innerHTML = `<div class="msg-list"><li class="error" style="list-style:none;"><span class="icon">✗</span>${escapeHtml(r.error)}</li></div>`;
+        return;
+    }
+    const routeDisplay = r.execError ? `<span class="badge badge-fail">実行エラー</span>` : `<span class="mono">${escapeHtml(r.executedRoute)}</span>`;
+    box.innerHTML = `
+        <div class="result-panel" style="margin-top:8px;">
+            <dl>
+                <dt>入力URL</dt><dd class="mono">${escapeHtml(r.rawUrl)}</dd>
+                <dt>PAC評価URL</dt><dd class="mono">${escapeHtml(r.pacUrl)}</dd>
+                <dt>host</dt><dd class="mono">${escapeHtml(r.host)}</dd>
+                <dt>判定結果</dt><dd>${routeDisplay}</dd>
+                <dt>該当システム</dt><dd>${escapeHtml(r.structured.systemName)}</dd>
+                <dt>該当条件</dt><dd class="mono">${r.structured.conditionDesc ? escapeHtml(r.structured.conditionDesc) : "-"}</dd>
+            </dl>
+            ${r.execError ? `<div class="msg-list"><li class="error" style="list-style:none; margin-top:8px;"><span class="icon">✗</span>PAC実行エラー: ${escapeHtml(r.execError)}</li></div>` : ""}
+            ${r.mismatch ? `<div class="msg-list"><li class="warning" style="list-style:none; margin-top:8px;"><span class="icon">⚠</span>生成PACの実行結果と構造化ルールからの期待結果が一致しません（ジェネレータの不具合の可能性があります）。</li></div>` : ""}
+        </div>`;
+}
+
+function renderGuardTable() {
+    const wrap = document.getElementById("guardTableWrap");
+    if (state.guardTests.length === 0) {
+        wrap.innerHTML = `<div class="empty-note">ガードテストが登録されていません。対象外URLがDIRECTのままであることを確認するテストの登録を推奨します。</div>`;
+        return;
+    }
+    let html = `<table><thead><tr><th>URL</th><th>期待するアクセス経路</th><th>備考</th><th class="col-actions">操作</th></tr></thead><tbody>`;
+    state.guardTests.forEach((g) => {
+        html += `<tr data-guard-id="${escapeHtml(g.id)}">
+            <td class="wrap-cell mono">${escapeHtml(g.url)}</td>
+            <td>${escapeHtml(routeNameById(g.expectedRouteId))}</td>
+            <td class="wrap-cell">${escapeHtml(g.note || "")}</td>
+            <td class="col-actions">
+                <button type="button" class="small" data-action="edit">編集</button>
+                <button type="button" class="small danger" data-action="delete">削除</button>
+            </td>
+        </tr>`;
+    });
+    html += "</tbody></table>";
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll("tr[data-guard-id]").forEach((row) => {
+        const id = row.dataset.guardId;
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => openGuardDialog(id));
+        row.querySelector('[data-action="delete"]').addEventListener("click", () => {
+            const g = Store.getGuardTest(id);
+            if (!confirm(`ガードテスト「${g.url}」を削除します。よろしいですか？`)) return;
+            Store.deleteGuardTest(id);
+            renderAll();
+        });
+    });
+}
+
+function openGuardDialog(guardId) {
+    const existing = guardId ? Store.getGuardTest(guardId) : null;
+    document.getElementById("guardDialogTitle").textContent = existing ? "ガードテストの編集" : "ガードテストの追加";
+    document.getElementById("guardFormUrl").value = existing ? existing.url : "";
+    document.getElementById("guardFormRoute").innerHTML = routeOptionsHtml(existing ? existing.expectedRouteId : state.settings.defaultRouteId, false);
+    document.getElementById("guardFormNote").value = existing ? (existing.note || "") : "";
+    const dialog = document.getElementById("guardDialog");
+    dialog.dataset.guardId = existing ? existing.id : genId("guard");
+    hideDialogError("guardDialogError");
+    dialog.showModal();
+}
+
+function saveGuardFromDialog() {
+    const dialog = document.getElementById("guardDialog");
+    const id = dialog.dataset.guardId;
+    const url = document.getElementById("guardFormUrl").value.trim();
+    const expectedRouteId = document.getElementById("guardFormRoute").value;
+    const note = document.getElementById("guardFormNote").value.trim();
+
+    if (!url) {
+        showDialogError("guardDialogError", "URLを入力してください。");
+        return;
+    }
+    if (!expectedRouteId) {
+        showDialogError("guardDialogError", "期待するアクセス経路を選択してください。");
+        return;
+    }
+    Store.upsertGuardTest({ id, url, expectedRouteId, note });
+    hideDialogError("guardDialogError");
+    dialog.close();
+    renderAll();
+    showToast("ガードテストを保存しました。");
+}
+
+function renderRegressionResult(targetElId) {
+    const box = document.getElementById(targetElId);
+    const summary = uiState.lastRegression;
+    if (!summary) {
+        box.innerHTML = `<div class="empty-note">まだ実行されていません。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で実行できます。</div>`;
+        return;
+    }
+    let html = `<div class="summary-grid">
+        <div class="summary-tile total"><span class="num">${summary.total}</span><span class="label">テスト対象</span></div>
+        <div class="summary-tile pass"><span class="num">${summary.pass}</span><span class="label">PASS</span></div>
+        <div class="summary-tile fail"><span class="num">${summary.fail}</span><span class="label">FAIL</span></div>
+    </div>`;
+
+    html += `<h3 style="font-size:13px;">システム別結果</h3>`;
+    if (summary.bySystem.length === 0) {
+        html += `<div class="empty-note">システムに登録されたテストURLがありません。</div>`;
+    } else {
+        html += `<ul class="msg-list" style="list-style:none;">`;
+        summary.bySystem.forEach((e) => {
+            const ok = e.pass === e.total;
+            html += `<li class="${ok ? "" : "error"}" style="background:${ok ? "var(--color-success-bg)" : ""}; color:${ok ? "var(--color-success)" : ""};">
+                ${ok ? "✓" : "✗"} ${escapeHtml(e.name)} &nbsp; ${e.pass} / ${e.total}
+            </li>`;
+        });
+        html += `</ul>`;
+    }
+
+    html += `<h3 style="font-size:13px;">共通（ガード）テスト</h3>
+        <p>${summary.guardPass === summary.guardTotal ? "✓" : "✗"} ${summary.guardPass} / ${summary.guardTotal}</p>`;
+
+    if (summary.failures.length > 0) {
+        html += `<h3 style="font-size:13px;">FAIL 詳細</h3><div class="table-wrap"><table><thead><tr>
+            <th>区分</th><th>URL</th><th>期待値</th><th>実際の結果</th><th>該当システム</th><th>該当条件</th>
+        </tr></thead><tbody>`;
+        summary.failures.forEach((f) => {
+            html += `<tr>
+                <td>${f.scope === "system" ? escapeHtml(f.systemName) : "共通テスト"}</td>
+                <td class="wrap-cell mono">${escapeHtml(f.url)}</td>
+                <td class="mono">${escapeHtml(f.expected || "-")}</td>
+                <td class="mono">${f.error ? `<span class="badge badge-fail">エラー: ${escapeHtml(f.error)}</span>` : escapeHtml(f.actual || "-")}</td>
+                <td>${escapeHtml(f.matchedSystemName || "-")}</td>
+                <td class="mono">${f.matchedCondition ? escapeHtml(f.matchedCondition) : "-"}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
+
+    box.innerHTML = html;
+}
+
+function runFullRegressionPipeline() {
+    const validation = validateConfig(state);
+    if (validation.errors.length > 0) {
+        uiState.regressionRun = { validation, pacCode: null, compiled: null, summary: null };
+        uiState.lastRegression = null;
+        return uiState.regressionRun;
+    }
+    const pacCode = generatePac(state);
+    const compiled = compileExecutablePac(pacCode);
+    let summary = null;
+    if (compiled.ok) {
+        const results = runRegression(state, compiled);
+        summary = summarizeRegression(results);
+    }
+    uiState.regressionRun = { validation, pacCode, compiled, summary };
+    uiState.lastRegression = summary;
+    return uiState.regressionRun;
+}
+
+/* =========================================================================
+ * UI: PAC タブ
+ * ========================================================================= */
+function renderPacTab() {
+    const run = uiState.regressionRun;
+    renderValidationResult(run);
+    renderSyntaxResult(run);
+    renderPacRegressionSummary(run);
+    renderPacPreview(run);
+}
+
+function renderValidationResult(run) {
+    const box = document.getElementById("validationResult");
+    const validation = run ? run.validation : validateConfig(state);
+    let html = "";
+    if (validation.errors.length === 0 && validation.warnings.length === 0) {
+        html = `<p><span class="badge badge-pass">✓ 検出された問題はありません</span></p>`;
+    } else {
+        if (validation.errors.length > 0) {
+            html += `<h3 style="font-size:13px;">エラー（${validation.errors.length}件、解消するまでPACは生成できません）</h3><ul class="msg-list">`;
+            validation.errors.forEach((e) => { html += `<li class="error"><span class="icon">✗</span>${escapeHtml(e.message)}</li>`; });
+            html += `</ul>`;
+        }
+        if (validation.warnings.length > 0) {
+            html += `<h3 style="font-size:13px;">警告（${validation.warnings.length}件、生成は可能ですが確認を推奨します）</h3><ul class="msg-list">`;
+            validation.warnings.forEach((w) => { html += `<li class="warning"><span class="icon">⚠</span>${escapeHtml(w.message)}</li>`; });
+            html += `</ul>`;
+        }
+    }
+    box.innerHTML = html;
+}
+
+function renderSyntaxResult(run) {
+    const card = document.getElementById("syntaxCard");
+    const box = document.getElementById("syntaxResult");
+    if (!run || !run.compiled) {
+        card.style.display = "none";
+        return;
+    }
+    card.style.display = "";
+    if (run.compiled.ok) {
+        box.innerHTML = `<p><span class="badge badge-pass">✓ 構文エラーなし / FindProxyForURL を定義できました</span></p>`;
+    } else {
+        box.innerHTML = `<ul class="msg-list"><li class="error"><span class="icon">✗</span>構文エラー: ${escapeHtml(run.compiled.error)}</li></ul>`;
+    }
+}
+
+function renderPacRegressionSummary(run) {
+    const card = document.getElementById("regressionSummaryCard");
+    if (!run || !run.summary) {
+        card.style.display = "none";
+        return;
+    }
+    card.style.display = "";
+    renderRegressionResult("pacRegressionResult");
+}
+
+function renderPacPreview(run) {
+    const card = document.getElementById("pacPreviewCard");
+    if (!run || !run.pacCode) {
+        card.style.display = "none";
+        return;
+    }
+    card.style.display = "";
+    document.getElementById("pacCodePreview").textContent = run.pacCode;
+
+    const warnBox = document.getElementById("pacPreviewCard").querySelector(".pac-warning-banner");
+    if (warnBox) warnBox.remove();
+    if (run.summary && run.summary.fail > 0) {
+        const banner = el(`<div class="msg-list pac-warning-banner" style="margin-top:10px;"><li class="warning"><span class="icon">⚠</span>回帰テストで ${run.summary.fail} 件失敗しています。本番利用前に確認してください。</li></div>`);
+        document.getElementById("pacCodePreview").insertAdjacentElement("afterend", banner);
+    }
+}
+
+function handleGeneratePac() {
+    runFullRegressionPipeline();
+    renderAll();
+    const run = uiState.regressionRun;
+    if (run.validation.errors.length > 0) {
+        showToast("入力検証エラーがあるため生成できません。");
+    } else if (!run.compiled.ok) {
+        showToast("PACの構文検証でエラーが発生しました。");
+    } else {
+        showToast("proxy.pac を生成しました。");
+    }
+}
+
+/* =========================================================================
+ * イベント初期化
+ * ========================================================================= */
+function initEvents() {
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById("btnExportJson").addEventListener("click", exportStateAsJSON);
+    document.getElementById("btnImportJson").addEventListener("click", () => document.getElementById("fileImportJson").click());
+    document.getElementById("fileImportJson").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => importStateFromJSON(String(reader.result));
+        reader.readAsText(file, "utf-8");
+        e.target.value = "";
+    });
+
+    document.querySelectorAll("[data-close-dialog]").forEach((btn) => {
+        btn.addEventListener("click", () => document.getElementById(btn.dataset.closeDialog).close());
+    });
+    document.querySelectorAll("dialog").forEach((dialog) => {
+        dialog.addEventListener("click", (e) => {
+            if (e.target === dialog) dialog.close();
+        });
+    });
+
+    // システム
+    document.getElementById("btnAddSystem").addEventListener("click", () => openSystemDialog(null));
+    document.getElementById("btnSaveSystem").addEventListener("click", saveSystemFromDialog);
+    document.getElementById("btnAddConditionRow").addEventListener("click", () => addConditionRow({ id: genId("cond"), type: "hostExact", value: "" }));
+    document.getElementById("btnAddTestUrlRow").addEventListener("click", () => addTestUrlRow({ id: genId("turl"), url: "", expectedRouteId: "" }));
+
+    document.getElementById("sysSearch").addEventListener("input", (e) => { uiState.systemFilter.name = e.target.value; renderSystemsTab(); });
+    document.getElementById("sysEnabledFilter").addEventListener("change", (e) => { uiState.systemFilter.enabled = e.target.value; renderSystemsTab(); });
+    document.getElementById("sysResultFilter").addEventListener("change", (e) => { uiState.systemFilter.result = e.target.value; renderSystemsTab(); });
+
+    // アクセス経路
+    document.getElementById("btnAddRoute").addEventListener("click", () => openRouteDialog(null));
+    document.getElementById("btnSaveRoute").addEventListener("click", saveRouteFromDialog);
+
+    // テスト
+    document.getElementById("btnRunUrlTest").addEventListener("click", () => {
+        const rawUrl = document.getElementById("urlTestInput").value.trim();
+        if (!rawUrl) return;
+        const validation = validateConfig(state);
+        if (validation.errors.length > 0) {
+            uiState.lastUrlTestResult = { error: "設定にエラーがあるため判定できません。PACタブでエラー内容を確認してください。" };
+            renderUrlTestResult();
+            return;
+        }
+        const pacCode = generatePac(state);
+        const compiled = compileExecutablePac(pacCode);
+        try {
+            uiState.lastUrlTestResult = runUrlTest(state, rawUrl, compiled);
+        } catch (e) {
+            uiState.lastUrlTestResult = { error: e.message };
+        }
+        renderUrlTestResult();
+    });
+    document.getElementById("urlTestInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("btnRunUrlTest").click();
+    });
+
+    document.getElementById("btnAddGuardTest").addEventListener("click", () => openGuardDialog(null));
+    document.getElementById("btnSaveGuard").addEventListener("click", saveGuardFromDialog);
+
+    document.getElementById("btnRunRegression").addEventListener("click", () => {
+        runFullRegressionPipeline();
+        renderAll();
+        const run = uiState.regressionRun;
+        if (run.validation.errors.length > 0) {
+            showToast("入力検証エラーがあるため回帰テストを実行できません。");
+        } else {
+            showToast("全件回帰テストを実行しました。");
+        }
+    });
+
+    // PAC
+    document.getElementById("btnGeneratePac").addEventListener("click", handleGeneratePac);
+    document.getElementById("btnCopyPac").addEventListener("click", async () => {
+        const text = document.getElementById("pacCodePreview").textContent;
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast("クリップボードにコピーしました。");
+        } catch (e) {
+            showToast("コピーに失敗しました。");
+        }
+    });
+    document.getElementById("btnDownloadPac").addEventListener("click", () => {
+        const run = uiState.regressionRun;
+        if (!run || !run.pacCode) return;
+        downloadTextFile("proxy.pac", run.pacCode);
+        showToast("proxy.pac をダウンロードしました。");
+    });
+}
+
+/* =========================================================================
+ * 初期化
+ * ========================================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+    initEvents();
+    renderAll();
+});
+</script>
+</body>
+</html>
