@@ -339,7 +339,7 @@ dialog .dialog-error.show { display: block; }
 <header>
     <div class="brand">
         <h1>iProxypac</h1>
-        <span class="version">v0.1.0</span>
+        <span class="version">v0.1.1</span>
     </div>
     <div class="actions">
         <span class="autosave-note">変更内容はブラウザに自動保存されます</span>
@@ -638,7 +638,7 @@ dialog .dialog-error.show { display: block; }
 /* =========================================================================
  * 定数
  * ========================================================================= */
-const APP_VERSION = "0.1.0";
+const APP_VERSION = "0.1.1";
 const FORMAT_VERSION = "1.0";
 const STORAGE_KEY = "iproxypac.state.v1";
 
@@ -648,11 +648,13 @@ const STORAGE_KEY = "iproxypac.state.v1";
  * テスト実行時のみ、これらの関数ソースを注入して FindProxyForURL を評価する。
  * ========================================================================= */
 function shExpMatch(host, pattern) {
-    const escaped = String(pattern)
-        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*/g, ".*")
-        .replace(/\?/g, ".");
-    return new RegExp("^" + escaped + "$").test(host);
+    // ChromiumがPAC標準ライブラリとして提供する shExpMatch と同じ変換ロジックを再現する。
+    // "." "*" "?" のみを変換し、他の正規表現メタ文字は意図的にエスケープしない。
+    // （実ブラウザと異なる独自の安全化を行うと、実機での判定と食い違う可能性があるため）
+    let regexStr = String(pattern).replace(/\./g, "\\.");
+    regexStr = regexStr.replace(/\*/g, ".*");
+    regexStr = regexStr.replace(/\?/g, ".");
+    return new RegExp("^" + regexStr + "$").test(host);
 }
 function dnsDomainIs(host, domain) {
     return host.length >= domain.length &&
@@ -727,6 +729,10 @@ function el(html) {
     tpl.innerHTML = html.trim();
     return tpl.content.firstElementChild;
 }
+function sanitizeForLineComment(text) {
+    // PACの1行コメント(//)に埋め込む前に、改行やUnicode行区切りを除去して安全化する。
+    return String(text).replace(/[\r\n\u2028\u2029]+/g, " ").trim();
+}
 
 /* =========================================================================
  * データストア（状態管理）
@@ -740,15 +746,15 @@ function createSampleState() {
             plainHostNameRouteId: "route_direct"
         },
         routes: [
-            { id: "route_direct", name: "DIRECT", value: "DIRECT" },
-            { id: "route_inet", name: "インターネットプロキシ", value: "PROXY 203.0.113.5:8080" },
-            { id: "route_gov", name: "国システム用プロキシ", value: "PROXY 192.0.2.10:8080" },
-            { id: "route_sub", name: "外部連携用プロキシ", value: "PROXY 198.51.100.20:8080" }
+            { id: "route_direct", name: "DIRECT", value: "DIRECT", sampleOrigin: true },
+            { id: "route_inet", name: "インターネットプロキシ", value: "PROXY 203.0.113.5:8080", sampleOrigin: true },
+            { id: "route_gov", name: "国システム用プロキシ", value: "PROXY 192.0.2.10:8080", sampleOrigin: true },
+            { id: "route_sub", name: "外部連携用プロキシ", value: "PROXY 198.51.100.20:8080", sampleOrigin: true }
         ],
         systems: [
             {
                 id: "sys_a", name: "サンプル国システムA", note: "○○業務で利用するサンプルシステムです。",
-                routeId: "route_gov", enabled: true,
+                routeId: "route_gov", enabled: true, sampleOrigin: true,
                 conditions: [
                     { id: "cond_a1", type: "hostExact", value: "service-a.example.go.jp" },
                     { id: "cond_a2", type: "shExpMatch", value: "*.sub-a.example.go.jp" }
@@ -761,7 +767,7 @@ function createSampleState() {
             },
             {
                 id: "sys_b", name: "サンプル国システムB", note: "△△業務で利用するサンプルシステムです。",
-                routeId: "route_sub", enabled: true,
+                routeId: "route_sub", enabled: true, sampleOrigin: true,
                 conditions: [
                     { id: "cond_b1", type: "dnsDomainIs", value: ".example-b.go.jp" }
                 ],
@@ -772,7 +778,7 @@ function createSampleState() {
             {
                 id: "sys_c", name: "サンプル外部連携システムC（無効化の例）",
                 note: "利用停止中システムの例。無効化するとPAC生成・回帰テストから除外されます。",
-                routeId: "route_inet", enabled: false,
+                routeId: "route_inet", enabled: false, sampleOrigin: true,
                 conditions: [
                     { id: "cond_c1", type: "ipExact", value: "192.0.2.50" }
                 ],
@@ -780,10 +786,9 @@ function createSampleState() {
             }
         ],
         guardTests: [
-            { id: "guard_1", url: "https://public-site.example.com/", expectedRouteId: "route_direct", note: "対象外の一般サイトの例" },
-            { id: "guard_2", url: "http://internal-system.local/", expectedRouteId: "route_direct", note: "対象外の社内システムの例" }
-        ],
-        meta: { sample: true }
+            { id: "guard_1", url: "https://public-site.example.com/", expectedRouteId: "route_direct", note: "対象外の一般サイトの例", sampleOrigin: true },
+            { id: "guard_2", url: "http://internal-system.local/", expectedRouteId: "route_direct", note: "対象外の社内システムの例", sampleOrigin: true }
+        ]
     };
 }
 
@@ -799,8 +804,7 @@ function createEmptyState() {
             { id: "route_direct", name: "DIRECT", value: "DIRECT" }
         ],
         systems: [],
-        guardTests: [],
-        meta: { sample: false }
+        guardTests: []
     };
 }
 
@@ -817,7 +821,6 @@ function normalizeState(loaded) {
         if (typeof sys.enabled !== "boolean") sys.enabled = true;
         if (!sys.id) sys.id = genId("sys");
     });
-    s.meta = Object.assign({ sample: false }, loaded && loaded.meta ? loaded.meta : {});
     s.formatVersion = FORMAT_VERSION;
     return s;
 }
@@ -840,6 +843,23 @@ function persistState() {
     } catch (e) {
         console.warn("自動保存に失敗しました。", e);
     }
+    invalidateGeneratedPac();
+}
+
+/*
+ * 設定が変更されるたびに、既に生成済みのPAC・構文検証結果・回帰テスト結果・
+ * URL単体テストの表示結果を破棄する。これにより、変更前の古いPACがそのまま
+ * ダウンロードされたり、変更前の判定結果がテスト画面に残り続けたりする事故を防ぐ。
+ * persistState はシステム/経路/ガードテストの追加・編集・削除・並び替え・設定変更など、
+ * すべての状態変更操作から呼び出されるため、ここに1箇所集約する。
+ */
+function invalidateGeneratedPac() {
+    if (uiState.regressionRun) {
+        uiState.pacStale = true;
+    }
+    uiState.regressionRun = null;
+    uiState.lastRegression = null;
+    uiState.lastUrlTestResult = null;
 }
 
 /* =========================================================================
@@ -936,7 +956,8 @@ function validateRouteValue(value) {
     if (segments.length === 0) return "値が空です。";
     for (const seg of segments) {
         if (seg === "DIRECT") continue;
-        const m = /^(PROXY|SOCKS5|SOCKS)\s+([^\s:]+):(\d{1,5})$/.exec(seg);
+        // Chromiumが対応するPACの経路キーワード（PROXY/HTTPS/SOCKS4/SOCKS5/SOCKS）に準拠する。
+        const m = /^(PROXY|HTTPS|SOCKS4|SOCKS5|SOCKS)\s+([^\s:]+):(\d{1,5})$/.exec(seg);
         if (!m) return `不正な形式です: "${seg}" (例: PROXY host:port または DIRECT)`;
         const port = Number(m[3]);
         if (port < 1 || port > 65535) return `ポート番号が不正です: "${seg}"`;
@@ -1133,7 +1154,7 @@ function generateSystemBlock(sys, indent) {
         .map((c) => CONDITION_TYPES[c.type].genCode(c.value.trim()));
     const route = Store.getRoute(sys.routeId);
     const lines = [];
-    lines.push(`${indent}// ${sys.name}`);
+    lines.push(`${indent}// ${sanitizeForLineComment(sys.name)}`);
     if (conds.length === 1) {
         lines.push(`${indent}if (${conds[0]}) {`);
     } else {
@@ -1389,20 +1410,52 @@ function importStateFromJSON(text) {
     if (!confirm("現在の設定を上書きして読み込みます。よろしいですか？")) return;
     state = normalizeState(parsed);
     persistState();
-    uiState.lastRegression = null;
-    uiState.regressionRun = null;
     renderAll();
     showToast("設定JSONを読み込みました。");
 }
 
+/* サンプル起源のデータ（sampleOrigin: true）が1件でも残っているかどうか */
+function hasSampleData() {
+    return state.systems.some((s) => s.sampleOrigin) ||
+        state.guardTests.some((g) => g.sampleOrigin) ||
+        state.routes.some((r) => r.sampleOrigin);
+}
+
+/*
+ * サンプルとして投入されたシステム・ガードテスト・アクセス経路のみを削除する。
+ * 利用者が自分で追加したデータ（sampleOriginを持たない）は対象外とし、誤って
+ * 一括削除されないようにする。サンプル起源のアクセス経路であっても、利用者が
+ * 追加したシステム等から実際に参照されている場合は削除せず残す。
+ */
 function clearSampleData() {
-    if (!confirm("サンプルデータ（システム・アクセス経路・ガードテスト）をすべて削除し、初期状態に戻します。よろしいですか？")) return;
-    state = createEmptyState();
+    const sampleSystems = state.systems.filter((s) => s.sampleOrigin);
+    const sampleGuards = state.guardTests.filter((g) => g.sampleOrigin);
+    const sampleRoutes = state.routes.filter((r) => r.sampleOrigin);
+    if (sampleSystems.length + sampleGuards.length + sampleRoutes.length === 0) {
+        showToast("サンプルデータは残っていません。");
+        return;
+    }
+    if (!confirm(`サンプルデータ（システム ${sampleSystems.length} 件・ガードテスト ${sampleGuards.length} 件・アクセス経路 最大 ${sampleRoutes.length} 件）を削除します。ご自身で追加したデータは削除されません。よろしいですか？`)) return;
+
+    state.systems = state.systems.filter((s) => !s.sampleOrigin);
+    state.guardTests = state.guardTests.filter((g) => !g.sampleOrigin);
+
+    const keptRouteNames = [];
+    sampleRoutes.forEach((route) => {
+        const usages = Store.routeUsage(route.id);
+        if (usages.length === 0) {
+            state.routes = state.routes.filter((r) => r.id !== route.id);
+        } else {
+            delete route.sampleOrigin;
+            keptRouteNames.push(route.name);
+        }
+    });
+
     persistState();
-    uiState.lastRegression = null;
-    uiState.regressionRun = null;
     renderAll();
-    showToast("サンプルデータを削除しました。");
+    showToast(keptRouteNames.length
+        ? `サンプルデータを削除しました（${keptRouteNames.join("、")} は他で使用中のため残しました）。`
+        : "サンプルデータを削除しました。");
 }
 
 /* =========================================================================
@@ -1413,7 +1466,8 @@ let uiState = {
     systemFilter: { name: "", enabled: "all", result: "all" },
     lastUrlTestResult: null,
     lastRegression: null,
-    regressionRun: null
+    regressionRun: null,
+    pacStale: false
 };
 
 function showToast(message) {
@@ -1455,10 +1509,10 @@ function renderAll() {
 
 function renderSampleBanner() {
     const box = document.getElementById("sampleBannerSystems");
-    if (state.meta && state.meta.sample) {
+    if (hasSampleData()) {
         box.innerHTML = `
             <div class="sample-banner">
-                <span>このデータは初期サンプルです。実在のシステム名・IPアドレスは含まれていません。用途を確認後、不要であれば削除してください。</span>
+                <span>初期サンプルのデータが含まれています（実在のシステム名・IPアドレスは含まれていません）。用途を確認後、不要であればサンプル分のみ削除できます。ご自身で追加したデータは削除されません。</span>
                 <button type="button" id="btnClearSample">サンプルデータを削除</button>
             </div>`;
         document.getElementById("btnClearSample").addEventListener("click", clearSampleData);
@@ -1863,7 +1917,11 @@ function renderRegressionResult(targetElId) {
     const box = document.getElementById(targetElId);
     const summary = uiState.lastRegression;
     if (!summary) {
-        box.innerHTML = `<div class="empty-note">まだ実行されていません。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で実行できます。</div>`;
+        if (uiState.pacStale) {
+            box.innerHTML = `<div class="msg-list"><li class="warning" style="list-style:none;"><span class="icon">⚠</span>設定が変更されたため、回帰テスト結果は無効になりました。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で再実行してください。</li></div>`;
+        } else {
+            box.innerHTML = `<div class="empty-note">まだ実行されていません。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で実行できます。</div>`;
+        }
         return;
     }
     let html = `<div class="summary-grid">
@@ -1910,6 +1968,7 @@ function renderRegressionResult(targetElId) {
 }
 
 function runFullRegressionPipeline() {
+    uiState.pacStale = false;
     const validation = validateConfig(state);
     if (validation.errors.length > 0) {
         uiState.regressionRun = { validation, pacCode: null, compiled: null, summary: null };
@@ -1933,10 +1992,26 @@ function runFullRegressionPipeline() {
  * ========================================================================= */
 function renderPacTab() {
     const run = uiState.regressionRun;
+    renderPacStaleBanner();
     renderValidationResult(run);
     renderSyntaxResult(run);
     renderPacRegressionSummary(run);
     renderPacPreview(run);
+}
+
+function renderPacStaleBanner() {
+    const card = document.getElementById("btnGeneratePac").closest(".card");
+    const existing = card.querySelector(".pac-stale-banner");
+    if (existing) existing.remove();
+    if (uiState.pacStale) {
+        const banner = el(`
+            <div class="msg-list pac-stale-banner" style="margin-top:10px;">
+                <li class="warning" style="list-style:none;">
+                    <span class="icon">⚠</span>設定が変更されています。PACを再生成してください。回帰テスト結果は無効になりました（変更前のPACはダウンロードできません）。
+                </li>
+            </div>`);
+        card.appendChild(banner);
+    }
 }
 
 function renderValidationResult(run) {
