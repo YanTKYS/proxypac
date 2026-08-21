@@ -307,6 +307,64 @@ dialog .dialog-error.show { display: block; }
 .dyn-row select { flex: 0 0 200px; }
 .dyn-row input[type="text"] { flex: 1; }
 .dyn-row .remove-row { flex: 0 0 auto; }
+.condition-row { margin-bottom: 8px; }
+.cond-caption {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin: 1px 0 0 2px;
+}
+
+.rule-block {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    padding: 12px 14px 14px;
+    margin-bottom: 12px;
+}
+.rule-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+}
+.rule-arrow {
+    text-align: center;
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 600;
+    margin: 10px 0;
+}
+.rule-arrow .arrow-glyph {
+    display: block;
+    font-size: 18px;
+    line-height: 1.2;
+}
+.route-detail {
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.preview-box {
+    border-left: 3px solid var(--color-primary);
+    background: var(--color-primary-bg);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+}
+.preview-box .preview-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 3px;
+}
+.preview-box .preview-text {
+    font-size: 13px;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+.preview-box .preview-text.text-muted { color: var(--color-text-muted); }
 
 #toast {
     position: fixed;
@@ -339,7 +397,7 @@ dialog .dialog-error.show { display: block; }
 <header>
     <div class="brand">
         <h1>iProxypac</h1>
-        <span class="version">v0.1.1</span>
+        <span class="version">v0.1.2</span>
     </div>
     <div class="actions">
         <span class="autosave-note">変更内容はブラウザに自動保存されます</span>
@@ -361,8 +419,8 @@ dialog .dialog-error.show { display: block; }
     <!-- ============ システム タブ ============ -->
     <section id="tab-systems" class="tab-panel active">
         <div class="hint">
-            国提供システム等を単位として登録します。1システムに複数の対象条件（ホスト完全一致・ワイルドカード・ドメイン一致・IP完全一致）と、
-            回帰テスト用のURLを複数登録できます。一覧の優先順位は上にあるほど先に判定されます（先に一致した条件が優先されます）。
+            国提供システム等を単位として登録します。「この条件に一致したら、この接続方法を使う」という判定条件を1システムに複数登録でき、
+            回帰テスト用のURLも複数登録できます。一覧の優先順位は上にあるほど先に判定されます（先に一致したシステムが優先されます）。
         </div>
         <div id="sampleBannerSystems"></div>
 
@@ -402,7 +460,8 @@ dialog .dialog-error.show { display: block; }
     <section id="tab-routes" class="tab-panel">
         <div class="hint">
             「アクセス経路」は proxy.pac が return する値（DIRECT や PROXY host:port）をマスターとして管理します。
-            システム側では経路を個別に書かず、ここで登録した経路をプルダウンから選択します。
+            ここで登録した「表示名」は、システム登録画面では「接続方法」の選択肢として表示されます。
+            システム側では実際の値（DIRECT / PROXY host:port など）を個別に書かず、プルダウンから選択します。
             複数プロキシのフェイルオーバー（例: <span class="mono">PROXY a:8080; PROXY b:8080; DIRECT</span>）も1つの経路として登録できます。
         </div>
 
@@ -546,14 +605,25 @@ dialog .dialog-error.show { display: block; }
             <label for="sysFormNote">備考</label>
             <input type="text" id="sysFormNote" placeholder="例: ○○業務で利用">
         </div>
-        <div class="field">
-            <label for="sysFormRoute">求めるアクセス経路 *</label>
+        <div class="subsection-title" style="margin-top:6px;">接続ルール</div>
+        <p class="hint" style="margin-bottom:10px;">「この条件に一致したら、この接続方法を使う」という1つのルールとして設定します。PACの関数名を知らなくても設定できます。</p>
+
+        <div class="rule-block">
+            <div class="rule-label">このシステムと判定する条件</div>
+            <div id="sysFormConditions"></div>
+            <button type="button" class="small" id="btnAddConditionRow">+ 条件を追加</button>
+
+            <div class="rule-arrow"><span class="arrow-glyph">↓</span>この条件に一致したら</div>
+
+            <div class="rule-label">接続方法</div>
             <select id="sysFormRoute"></select>
+            <div id="sysFormRouteDetail" class="route-detail"></div>
         </div>
 
-        <div class="subsection-title">対象条件</div>
-        <div id="sysFormConditions"></div>
-        <button type="button" class="small" id="btnAddConditionRow">+ 条件を追加</button>
+        <div class="preview-box">
+            <div class="preview-title">この設定の意味</div>
+            <div id="sysFormPreview" class="preview-text"></div>
+        </div>
 
         <div class="subsection-title">回帰テストURL</div>
         <div id="sysFormTestUrls"></div>
@@ -562,7 +632,7 @@ dialog .dialog-error.show { display: block; }
         <div class="dialog-error" id="systemDialogError"></div>
     </div>
     <div class="dialog-foot">
-        <span class="text-muted" style="font-size:12px;">回帰テストURLの「期待経路」を未選択の場合はこのシステムのアクセス経路が使用されます。</span>
+        <span class="text-muted" style="font-size:12px;">回帰テストURLの「期待する接続方法」を未選択の場合はこのシステムの接続方法が使用されます。</span>
         <div style="display:flex; gap:8px;">
             <button type="button" data-close-dialog="systemDialog">キャンセル</button>
             <button type="button" class="primary" id="btnSaveSystem">保存</button>
@@ -580,6 +650,7 @@ dialog .dialog-error.show { display: block; }
         <div class="field">
             <label for="routeFormName">表示名 *</label>
             <input type="text" id="routeFormName" placeholder="例: 国システム用プロキシ">
+            <span class="text-muted" style="font-size:12px;">システム登録画面の「接続方法」で選択肢として表示される名前です。</span>
         </div>
         <div class="field">
             <label for="routeFormValue">PACでreturnする値 *</label>
@@ -638,7 +709,7 @@ dialog .dialog-error.show { display: block; }
 /* =========================================================================
  * 定数
  * ========================================================================= */
-const APP_VERSION = "0.1.1";
+const APP_VERSION = "0.1.2";
 const FORMAT_VERSION = "1.0";
 const STORAGE_KEY = "iproxypac.state.v1";
 
@@ -677,33 +748,43 @@ function isValidIPv4(value) {
 }
 
 /* =========================================================================
- * 対象条件タイプの定義（判別方法ごとの表示・PACコード生成・実判定ロジックを集約）
+ * 判定条件タイプの定義（判別方法ごとの表示・PACコード生成・実判定ロジックを集約）
+ * label / technicalName / hint はシステム編集画面でPACに詳しくない利用者にも
+ * 意味が伝わるよう、業務的な表現とPAC関数名を分けて保持する。
  * ========================================================================= */
 const CONDITION_TYPES = {
     hostExact: {
-        label: "ホスト完全一致",
+        label: "ホスト名が完全一致",
+        technicalName: "host完全一致",
         placeholder: "service.example.go.jp",
+        hint: "入力した値にのみ一致します。",
         describe: (v) => `host === "${v}"`,
         genCode: (v) => `host === ${JSON.stringify(v)}`,
         match: (host, v) => host === v
     },
     shExpMatch: {
-        label: "ワイルドカード一致 (shExpMatch)",
+        label: "ワイルドカードで一致",
+        technicalName: "shExpMatch()",
         placeholder: "*.example.go.jp",
+        hint: "例: portal.example.go.jp などに一致",
         describe: (v) => `shExpMatch(host, "${v}")`,
         genCode: (v) => `shExpMatch(host, ${JSON.stringify(v)})`,
         match: (host, v) => shExpMatch(host, v)
     },
     dnsDomainIs: {
-        label: "ドメイン一致 (dnsDomainIs)",
+        label: "ドメイン配下に一致",
+        technicalName: "dnsDomainIs()",
         placeholder: ".example.go.jp",
+        hint: "例: portal.example.go.jp などに一致",
         describe: (v) => `dnsDomainIs(host, "${v}")`,
         genCode: (v) => `dnsDomainIs(host, ${JSON.stringify(v)})`,
         match: (host, v) => dnsDomainIs(host, v)
     },
     ipExact: {
-        label: "IPアドレス完全一致",
+        label: "IPアドレスが完全一致",
+        technicalName: "IP完全一致",
         placeholder: "192.0.2.10",
+        hint: "入力した値にのみ一致します。",
         describe: (v) => `host === "${v}"`,
         genCode: (v) => `host === ${JSON.stringify(v)}`,
         match: (host, v) => host === v
@@ -998,7 +1079,7 @@ function validateConfig(currentState) {
             bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: 参照しているアクセス経路が存在しません。` });
         }
         if (!sys.conditions || sys.conditions.length === 0) {
-            bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: 対象条件が1件も設定されていません。` });
+            bucket.push({ scope: "system", systemId: sys.id, message: `${prefix}: 判定条件が1件も設定されていません。` });
         }
 
         const seenInSystem = new Set();
@@ -1486,7 +1567,7 @@ function switchTab(tabName) {
 
 function routeOptionsHtml(selectedId, includeBlank, blankLabel) {
     let html = "";
-    if (includeBlank) html += `<option value="">${escapeHtml(blankLabel || "(システムの既定経路を使用)")}</option>`;
+    if (includeBlank) html += `<option value="">${escapeHtml(blankLabel || "(このシステムの接続方法を使用)")}</option>`;
     state.routes.forEach((r) => {
         html += `<option value="${escapeHtml(r.id)}" ${r.id === selectedId ? "selected" : ""}>${escapeHtml(r.name)}</option>`;
     });
@@ -1561,7 +1642,7 @@ function renderSystemsTab() {
     }
 
     let html = `<table><thead><tr>
-        <th>優先順位</th><th>有効</th><th>システム名</th><th>アクセス経路</th>
+        <th>優先順位</th><th>有効</th><th>システム名</th><th>接続方法</th>
         <th>条件</th><th>テストURL数</th><th>回帰結果</th><th class="col-actions">操作</th>
     </tr></thead><tbody>`;
 
@@ -1643,21 +1724,66 @@ function openSystemDialog(systemId) {
     const dialog = document.getElementById("systemDialog");
     dialog.dataset.systemId = editing.id;
     hideDialogError("systemDialogError");
+    updateRouteDetail();
+    updateSystemDialogPreview();
     dialog.showModal();
+}
+
+/* 条件行の select/input の下に、PAC関数名と簡単な補足（技術者向け・利用者向けを両立） を表示する */
+function updateConditionRowCaption(row) {
+    const type = CONDITION_TYPES[row.querySelector(".cond-type").value];
+    row.querySelector(".cond-value").placeholder = type.placeholder;
+    row.querySelector(".cond-caption").textContent = `${type.technicalName} ・ ${type.hint}`;
 }
 
 function addConditionRow(cond) {
     const row = el(`
-        <div class="dyn-row condition-row" data-row-id="${escapeHtml(cond.id)}">
-            <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
-            <input type="text" class="cond-value" placeholder="${escapeHtml(CONDITION_TYPES[cond.type].placeholder)}" value="${escapeHtml(cond.value || "")}">
-            <button type="button" class="small danger remove-row" title="この条件を削除">削除</button>
+        <div class="condition-row" data-row-id="${escapeHtml(cond.id)}">
+            <div class="dyn-row">
+                <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
+                <input type="text" class="cond-value" placeholder="${escapeHtml(CONDITION_TYPES[cond.type].placeholder)}" value="${escapeHtml(cond.value || "")}">
+                <button type="button" class="small danger remove-row" title="この条件を削除">削除</button>
+            </div>
+            <div class="cond-caption"></div>
         </div>`);
-    row.querySelector(".cond-type").addEventListener("change", (e) => {
-        row.querySelector(".cond-value").placeholder = CONDITION_TYPES[e.target.value].placeholder;
-    });
-    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    updateConditionRowCaption(row);
     document.getElementById("sysFormConditions").appendChild(row);
+    updateSystemDialogPreview();
+}
+
+/* 接続方法(経路)の選択に応じて、選んだ経路の実際のPAC値と、DIRECTの場合の補足説明を表示する */
+function updateRouteDetail() {
+    const routeId = document.getElementById("sysFormRoute").value;
+    const route = Store.getRoute(routeId);
+    const box = document.getElementById("sysFormRouteDetail");
+    if (!route) {
+        box.innerHTML = "";
+        return;
+    }
+    const isDirect = route.value.trim() === "DIRECT";
+    box.innerHTML = `<span class="mono">${escapeHtml(route.value)}</span>` +
+        (isDirect ? `<br>プロキシを経由せず直接接続します。` : "");
+}
+
+/* 「このシステムと判定する条件」＋「接続方法」の現在の入力内容から、自然文の設定サマリーを組み立てて表示する */
+function updateSystemDialogPreview() {
+    const box = document.getElementById("sysFormPreview");
+    const conditionValues = Array.from(document.querySelectorAll("#sysFormConditions .condition-row"))
+        .map((row) => row.querySelector(".cond-value").value.trim())
+        .filter((v) => v !== "");
+    const routeId = document.getElementById("sysFormRoute").value;
+    const route = Store.getRoute(routeId);
+
+    if (conditionValues.length === 0 || !route) {
+        box.textContent = "条件と接続方法を入力すると、ここに設定内容が表示されます。";
+        box.classList.add("text-muted");
+        return;
+    }
+    box.classList.remove("text-muted");
+    const conditionText = conditionValues.join(" または ");
+    const isDirect = route.value.trim() === "DIRECT";
+    const routeText = isDirect ? "プロキシを経由せず直接接続します。" : `「${route.name}」を使用します。`;
+    box.textContent = `${conditionText} に一致した場合、${routeText}`;
 }
 
 function addTestUrlRow(t) {
@@ -1695,7 +1821,7 @@ function saveSystemFromDialog() {
         return;
     }
     if (!routeId) {
-        showDialogError("systemDialogError", "アクセス経路を選択してください。");
+        showDialogError("systemDialogError", "接続方法を選択してください。");
         return;
     }
 
@@ -1706,7 +1832,7 @@ function saveSystemFromDialog() {
     })).filter((c) => c.value !== "");
 
     if (conditions.length === 0) {
-        showDialogError("systemDialogError", "対象条件を少なくとも1件、値を入力して登録してください。");
+        showDialogError("systemDialogError", "このシステムと判定する条件を少なくとも1件、値を入力して登録してください。");
         return;
     }
 
@@ -2123,6 +2249,29 @@ function initEvents() {
     document.getElementById("btnSaveSystem").addEventListener("click", saveSystemFromDialog);
     document.getElementById("btnAddConditionRow").addEventListener("click", () => addConditionRow({ id: genId("cond"), type: "hostExact", value: "" }));
     document.getElementById("btnAddTestUrlRow").addEventListener("click", () => addTestUrlRow({ id: genId("turl"), url: "", expectedRouteId: "" }));
+
+    // 条件行は動的に追加・削除されるため、コンテナへのイベント委譲でまとめて扱う。
+    // 種類の変更・値の入力・行の削除いずれも「この設定の意味」プレビューへ即時反映する。
+    const sysFormConditionsEl = document.getElementById("sysFormConditions");
+    sysFormConditionsEl.addEventListener("change", (e) => {
+        if (e.target.classList.contains("cond-type")) {
+            updateConditionRowCaption(e.target.closest(".condition-row"));
+            updateSystemDialogPreview();
+        }
+    });
+    sysFormConditionsEl.addEventListener("input", (e) => {
+        if (e.target.classList.contains("cond-value")) updateSystemDialogPreview();
+    });
+    sysFormConditionsEl.addEventListener("click", (e) => {
+        if (e.target.classList.contains("remove-row")) {
+            e.target.closest(".condition-row").remove();
+            updateSystemDialogPreview();
+        }
+    });
+    document.getElementById("sysFormRoute").addEventListener("change", () => {
+        updateRouteDetail();
+        updateSystemDialogPreview();
+    });
 
     document.getElementById("sysSearch").addEventListener("input", (e) => { uiState.systemFilter.name = e.target.value; renderSystemsTab(); });
     document.getElementById("sysEnabledFilter").addEventListener("change", (e) => { uiState.systemFilter.enabled = e.target.value; renderSystemsTab(); });
