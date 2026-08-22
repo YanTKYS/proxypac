@@ -313,6 +313,9 @@ dialog .dialog-error.show { display: block; }
     color: var(--color-text-muted);
     margin: 1px 0 0 2px;
 }
+/* このバージョンでは扱えない条件の種類（古いJSONの読み込み等）を選び直させるための強調表示 */
+.condition-row.condition-unknown .cond-type { border-color: var(--color-danger); }
+.condition-row.condition-unknown .cond-caption { color: var(--color-danger); }
 
 .rule-block {
     border: 1px solid var(--color-border);
@@ -1567,9 +1570,15 @@ function routeOptionsHtml(selectedId, includeBlank, blankLabel) {
 }
 
 function conditionTypeOptionsHtml(selected) {
-    return Object.keys(CONDITION_TYPES).map((key) => {
+    const options = Object.keys(CONDITION_TYPES).map((key) => {
         return `<option value="${key}" ${key === selected ? "selected" : ""}>${escapeHtml(CONDITION_TYPES[key].label)}</option>`;
-    }).join("");
+    });
+    if (!CONDITION_TYPES[selected]) {
+        // 古いJSONの読み込み等で未対応の種類が入っていた場合。
+        // 意味が変わる可能性があるため自動変換はせず、選択肢として残して選び直してもらう。
+        options.unshift(`<option value="${escapeHtml(selected || "")}" selected>不明な条件（${escapeHtml(selected || "未設定")}）— 選び直してください</option>`);
+    }
+    return options.join("");
 }
 
 function renderAll() {
@@ -1585,7 +1594,7 @@ function renderSampleBanner() {
     if (hasSampleData()) {
         box.innerHTML = `
             <div class="sample-banner">
-                <span>初期サンプルのデータが含まれています（実在のシステム名・IPアドレスは含まれていません）。用途を確認後、不要であればサンプル分のみ削除できます。ご自身で追加したデータは削除されません。</span>
+                <span>初期サンプルのデータが含まれています（実在のシステム名・IPアドレスは含まれていません）。用途を確認後、不要であればサンプル分のみ削除できます。ご自身で追加したデータと、サンプルを編集して保存したデータは削除されません。</span>
                 <button type="button" id="btnClearSample">サンプルデータを削除</button>
             </div>`;
         document.getElementById("btnClearSample").addEventListener("click", clearSampleData);
@@ -1724,9 +1733,25 @@ function openSystemDialog(systemId) {
     dialog.showModal();
 }
 
-/* 条件行の select/input の下に、PAC関数名と簡単な補足（技術者向け・利用者向けを両立） を表示する */
+/*
+ * 条件行の select/input の下に、PAC関数名と簡単な補足（技術者向け・利用者向けを両立）を表示する。
+ * 未対応の種類が選ばれている間は、値を残したまま選び直しを促す表示にする（保存はできない）。
+ */
 function updateConditionRowCaption(row) {
-    const type = CONDITION_TYPES[row.querySelector(".cond-type").value];
+    const select = row.querySelector(".cond-type");
+    const type = CONDITION_TYPES[select.value];
+    if (!type) {
+        row.classList.add("condition-unknown");
+        row.querySelector(".cond-value").placeholder = "";
+        row.querySelector(".cond-caption").textContent =
+            "このバージョンでは扱えない条件の種類です。値はそのまま残していますので、上のプルダウンから条件の種類を選び直してください。";
+        return;
+    }
+    // 既知の種類を選び直したら、読み込み時に補った「不明な条件」の選択肢は取り除く。
+    Array.from(select.options).forEach((opt) => {
+        if (!CONDITION_TYPES[opt.value]) opt.remove();
+    });
+    row.classList.remove("condition-unknown");
     row.querySelector(".cond-value").placeholder = type.placeholder;
     row.querySelector(".cond-caption").textContent = `${type.technicalName} ・ ${type.hint}`;
 }
@@ -1736,7 +1761,7 @@ function addConditionRow(cond) {
         <div class="condition-row" data-row-id="${escapeHtml(cond.id)}">
             <div class="dyn-row">
                 <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
-                <input type="text" class="cond-value" placeholder="${escapeHtml(CONDITION_TYPES[cond.type].placeholder)}" value="${escapeHtml(cond.value || "")}">
+                <input type="text" class="cond-value" value="${escapeHtml(cond.value || "")}">
                 <button type="button" class="small danger remove-row" title="この条件を削除">削除</button>
             </div>
             <div class="cond-caption"></div>
@@ -1827,6 +1852,12 @@ function saveSystemFromDialog() {
 
     if (conditions.length === 0) {
         showDialogError("systemDialogError", "このシステムと判定する条件を少なくとも1件、値を入力して登録してください。");
+        return;
+    }
+
+    const unknown = conditions.find((c) => !CONDITION_TYPES[c.type]);
+    if (unknown) {
+        showDialogError("systemDialogError", `条件の種類「${unknown.type || "(未設定)"}」はこのバージョンでは扱えません。プルダウンから条件の種類を選び直してください（値の意味が変わる可能性があるため、自動では変換しません）。`);
         return;
     }
 
