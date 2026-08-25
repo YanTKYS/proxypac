@@ -1337,6 +1337,10 @@ function evaluateStructured(currentState, host) {
 
 /* =========================================================================
  * Chromium想定のURL→PAC入力変換
+ * Chromium系ブラウザはPACへURLを渡す前にpath/query/fragmentを取り除くため、
+ * テストでも "scheme://host[:port]/" の形へ落としてから評価する。
+ * ここを実ブラウザと揃えないと、path依存の条件が実機では効かないのに
+ * テストではPASSする、といった食い違いが起きる。
  * ========================================================================= */
 function toChromiumPacInputs(rawUrl) {
     let normalized = rawUrl.trim();
@@ -1491,7 +1495,6 @@ function importStateFromJSON(text) {
     showToast("設定JSONを読み込みました。");
 }
 
-/* サンプル起源のデータ（sampleOrigin: true）が1件でも残っているかどうか */
 function hasSampleData() {
     return state.systems.some((s) => s.sampleOrigin) ||
         state.guardTests.some((g) => g.sampleOrigin) ||
