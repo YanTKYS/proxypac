@@ -610,43 +610,45 @@ dialog .dialog-error.show { display: block; }
                 （<span class="mono">proxy.pac</span> 本体は上記のとおりコメントを維持したまま出力されます）。
             </p>
             <div id="browserLaunchConsistency"></div>
-            <div id="browserLaunchSizeSummary" class="result-panel"></div>
+            <div id="browserLaunchBody">
+                <div id="browserLaunchSizeSummary" class="result-panel"></div>
 
-            <div class="toolbar" style="margin:10px 0; flex-wrap:wrap;">
-                <button type="button" id="btnCopyDataUrl">data URLをコピー</button>
-                <button type="button" id="btnCopyPacArg">起動引数をコピー</button>
-                <button type="button" id="btnCopyEdgeCmd">Edge用をコピー</button>
-                <button type="button" id="btnCopyChromeCmd">Chrome用をコピー</button>
-            </div>
-            <div id="browserLaunchWarning"></div>
-
-            <details id="browserLaunchDetails">
-                <summary style="cursor:pointer; font-size:13px; font-weight:600;">詳細を表示（data URL・起動引数・ショートカット例）</summary>
-
-                <div class="subsection-title">Base64 PAC data URL</div>
-                <textarea class="data-url-box" id="dataUrlBox" readonly rows="4"></textarea>
-                <p class="hint" style="margin:4px 0 12px;"><span id="dataUrlSizeLine"></span></p>
-
-                <div class="subsection-title">起動引数のみ（既存ショートカットへの追記・他の起動方法への利用向け）</div>
-                <textarea class="data-url-box" id="pacArgBox" readonly rows="4"></textarea>
-                <p class="hint" style="margin:4px 0 12px;"><span id="pacArgSizeLine"></span></p>
-
-                <div class="subsection-title">Edgeショートカット用（例）</div>
-                <textarea class="data-url-box" id="edgeCmdBox" readonly rows="4"></textarea>
-                <p class="hint" style="margin:4px 0 12px;"><span id="edgeCmdSizeLine"></span></p>
-
-                <div class="subsection-title">Chromeショートカット用（例）</div>
-                <textarea class="data-url-box" id="chromeCmdBox" readonly rows="4"></textarea>
-                <p class="hint" style="margin:4px 0 12px;"><span id="chromeCmdSizeLine"></span></p>
-
-                <div class="hint" style="margin-top:6px;">
-                    実行ファイルのインストール先は端末によって異なるため、上記は一例です。ショートカットの「リンク先」欄などへ貼り付ける際は、
-                    お使いの端末の実際のパスに置き換えてください。<br>
-                    既にEdge / Chromeが起動している場合、指定した起動引数が既存プロセスに引き継がれ、期待どおり適用されない場合があります。
-                    必要に応じてブラウザを完全終了してから起動してください。専用プロファイルを使う場合は、
-                    <span class="mono">--user-data-dir="C:\proxypac-profile"</span> のような引数を追加する方法もあります（任意）。
+                <div class="toolbar" style="margin:10px 0; flex-wrap:wrap;">
+                    <button type="button" id="btnCopyDataUrl">data URLをコピー</button>
+                    <button type="button" id="btnCopyPacArg">起動引数をコピー</button>
+                    <button type="button" id="btnCopyEdgeCmd">Edge用をコピー</button>
+                    <button type="button" id="btnCopyChromeCmd">Chrome用をコピー</button>
                 </div>
-            </details>
+                <div id="browserLaunchWarning"></div>
+
+                <details id="browserLaunchDetails">
+                    <summary style="cursor:pointer; font-size:13px; font-weight:600;">詳細を表示（data URL・起動引数・ショートカット例）</summary>
+
+                    <div class="subsection-title">Base64 PAC data URL</div>
+                    <textarea class="data-url-box" id="dataUrlBox" readonly rows="4"></textarea>
+                    <p class="hint" style="margin:4px 0 12px;"><span id="dataUrlSizeLine"></span></p>
+
+                    <div class="subsection-title">起動引数のみ（既存ショートカットへの追記・他の起動方法への利用向け）</div>
+                    <textarea class="data-url-box" id="pacArgBox" readonly rows="4"></textarea>
+                    <p class="hint" style="margin:4px 0 12px;"><span id="pacArgSizeLine"></span></p>
+
+                    <div class="subsection-title">Edgeショートカット用（例）</div>
+                    <textarea class="data-url-box" id="edgeCmdBox" readonly rows="4"></textarea>
+                    <p class="hint" style="margin:4px 0 12px;"><span id="edgeCmdSizeLine"></span></p>
+
+                    <div class="subsection-title">Chromeショートカット用（例）</div>
+                    <textarea class="data-url-box" id="chromeCmdBox" readonly rows="4"></textarea>
+                    <p class="hint" style="margin:4px 0 12px;"><span id="chromeCmdSizeLine"></span></p>
+
+                    <div class="hint" style="margin-top:6px;">
+                        実行ファイルのインストール先は端末によって異なるため、上記は一例です。ショートカットの「リンク先」欄などへ貼り付ける際は、
+                        お使いの端末の実際のパスに置き換えてください。<br>
+                        既にEdge / Chromeが起動している場合、指定した起動引数が既存プロセスに引き継がれ、期待どおり適用されない場合があります。
+                        必要に応じてブラウザを完全終了してから起動してください。専用プロファイルを使う場合は、
+                        <span class="mono">--user-data-dir="C:\proxypac-profile"</span> のような引数を追加する方法もあります（任意）。
+                    </div>
+                </details>
+            </div>
         </div>
     </section>
 
@@ -1487,6 +1489,20 @@ function checkBase64RoundTrip(pacCodeLite, base64) {
     } catch (e) {
         return { ok: false, error: e.message };
     }
+}
+
+/*
+ * ブラウザ起動用出力（data URL・起動引数・Edge/Chromeショートカット用文字列）を
+ * コピー・利用してよい状態かどうかを1箇所で判定する。
+ * Base64用PACの構文エラー、通常PACとの判定不一致、Base64往復確認の失敗のいずれかが
+ * あれば「生成処理の不具合」として扱い、コピー操作を許可しない。
+ */
+function isBrowserLaunchOutputValid(run) {
+    return !!(run &&
+        run.compiledLite && run.compiledLite.ok &&
+        run.consistency && run.consistency.ok &&
+        run.roundTrip && run.roundTrip.ok &&
+        run.base64);
 }
 
 /* =========================================================================
@@ -2439,13 +2455,36 @@ function renderPacPreview(run) {
  * Base64 data URL・起動引数・Edge/Chromeショートカット用文字列を組み立てて表示する。
  * 通常PACと同様、設定変更後に無効化された状態では表示しない（古い文字列をコピーさせない）。
  */
+function browserLaunchCopyButtons() {
+    return [
+        document.getElementById("btnCopyDataUrl"),
+        document.getElementById("btnCopyPacArg"),
+        document.getElementById("btnCopyEdgeCmd"),
+        document.getElementById("btnCopyChromeCmd")
+    ];
+}
+
 function renderBrowserLaunchSection(run) {
     const card = document.getElementById("browserLaunchCard");
-    if (!run || !run.pacCodeLite || !run.compiledLite || !run.compiledLite.ok || !run.base64) {
+    if (!run || !run.pacCodeLite) {
         card.style.display = "none";
         return;
     }
     card.style.display = "";
+
+    const bodyBox = document.getElementById("browserLaunchBody");
+    const consistencyBox = document.getElementById("browserLaunchConsistency");
+
+    // Base64用PAC自体がコンパイルできない場合、data URL等は算出できないため、
+    // 理由だけを表示してコピー操作は行わせない。
+    if (!run.compiledLite || !run.compiledLite.ok) {
+        bodyBox.style.display = "none";
+        browserLaunchCopyButtons().forEach((b) => { b.disabled = true; });
+        const reason = run.compiledLite ? run.compiledLite.error : "不明なエラー";
+        consistencyBox.innerHTML = `<ul class="msg-list"><li class="error"><span class="icon">✗</span>ブラウザ起動用PACの生成に失敗しました。Base64用PACの構文エラー: ${escapeHtml(reason)}</li></ul>`;
+        return;
+    }
+    bodyBox.style.display = "";
 
     const dataUrl = buildPacDataUrl(run.base64);
     const pacArg = buildProxyPacArgument(dataUrl);
@@ -2480,9 +2519,11 @@ function renderBrowserLaunchSection(run) {
         ? `<ul class="msg-list"><li class="warning"><span class="icon">⚠</span>起動文字列が長くなっています（最大 ${maxLen.toLocaleString()} 文字）。Windowsショートカットや環境によっては正常に利用できない可能性があります。実機で確認してください。</li></ul>`
         : "";
 
+    browserLaunchCopyButtons().forEach((b) => { b.disabled = !isBrowserLaunchOutputValid(run); });
     renderPacConsistencyResult(run);
 }
 
+/* run.compiledLite.ok を前提に、通常PACとの判定不一致・Base64往復確認の結果を表示する。 */
 function renderPacConsistencyResult(run) {
     const box = document.getElementById("browserLaunchConsistency");
     const consistencyOk = !run.consistency || run.consistency.ok;
@@ -2493,10 +2534,10 @@ function renderPacConsistencyResult(run) {
     }
     let html = `<ul class="msg-list">`;
     if (!consistencyOk) {
-        html += `<li class="error"><span class="icon">✗</span>通常PACとBase64用PACの判定結果が一致しないURLが ${run.consistency.mismatches.length} 件あります。生成処理の不具合の可能性があるため、コピー前に確認してください。</li>`;
+        html += `<li class="error"><span class="icon">✗</span>通常PACとBase64用PACの判定結果が一致しないURLが ${run.consistency.mismatches.length} 件あります。生成処理の不具合の可能性があるため、コピーを無効化しています。</li>`;
     }
     if (!roundTripOk) {
-        html += `<li class="error"><span class="icon">✗</span>Base64エンコード/デコードの往復確認で、元のPACコードと一致しませんでした。</li>`;
+        html += `<li class="error"><span class="icon">✗</span>Base64エンコード/デコードの往復確認で、元のPACコードと一致しませんでした。生成処理の不具合の可能性があるため、コピーを無効化しています。</li>`;
     }
     html += `</ul>`;
     box.innerHTML = html;
@@ -2516,7 +2557,11 @@ function generatedPacCode() {
 /* 現在有効なBase64 data URL（コメント削除版PACから生成）を返す。無い場合は理由を通知する。 */
 function generatedBase64DataUrl() {
     const run = uiState.regressionRun;
-    if (run && run.base64) return buildPacDataUrl(run.base64);
+    if (isBrowserLaunchOutputValid(run)) return buildPacDataUrl(run.base64);
+    if (run && run.pacCodeLite) {
+        showToast("Base64用PACの検証でエラーが検出されているため、コピーできません。内容を確認してください。");
+        return null;
+    }
     showToast("有効なPACがありません。「検証してPACを生成」を実行してください。");
     return null;
 }
