@@ -5,456 +5,370 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iProxypac - proxy.pac 管理ツール</title>
 <style>
+/* =========================================================================
+ * デザイン方針
+ * デジタル庁デザインシステム（基本デザイン・主要コンポーネント・アクセシビリティ）の考え方を参考に、
+ * 白・グレー基調、アクセントは操作と状態の識別にのみ使用、状態は色だけでなく文字でも示す。
+ * 外部CSS・Webフォントは使用せず、必要なスタイルはすべてこのファイル内で定義する。
+ * ========================================================================= */
+
+/* ---- 基本設定（色・文字・余白） ---- */
 :root {
-    --color-bg: #f4f5f7;
-    --color-panel: #ffffff;
-    --color-border: #d7dbe0;
-    --color-border-strong: #b7bdc6;
-    --color-text: #1f2430;
-    --color-text-muted: #5a6270;
-    --color-primary: #1a5fb4;
-    --color-primary-dark: #134a8e;
-    --color-primary-bg: #e8f0fb;
-    --color-danger: #c0392b;
-    --color-danger-bg: #fdecea;
-    --color-warning: #9a6b00;
-    --color-warning-bg: #fff6e0;
-    --color-success: #1e7d3c;
-    --color-success-bg: #e8f7ec;
-    --color-disabled: #9aa0a8;
-    --radius: 6px;
+    --c-text: #1a1a1a;
+    --c-text-sub: #4d4d4d;
+    --c-bg: #ffffff;
+    --c-bg-subtle: #f2f2f2;
+    --c-line: #cccccc;
+    --c-line-strong: #767676;
+    --c-primary: #0017c1;
+    --c-primary-hover: #00118f;
+    --c-primary-active: #000971;
+    --c-primary-bg: #e8f1fe;
+    --c-error: #ce0000;
+    --c-error-bg: #fdeeee;
+    --c-warning: #7a4f00;
+    --c-warning-line: #b78f00;
+    --c-warning-bg: #fff8dd;
+    --c-disabled-bg: #e6e6e6;
+    --c-disabled-text: #6b6b6b;
+    --c-focus: #ffd43d;
+    --radius: 4px;
+    --font-sans: "Noto Sans JP", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    --font-mono: Consolas, "SFMono-Regular", Menlo, "Noto Sans Mono CJK JP", monospace;
 }
 * { box-sizing: border-box; }
-html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
+[hidden] { display: none !important; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
 }
-h1, h2, h3, h4 { margin: 0 0 8px 0; font-weight: 600; }
-p { margin: 0 0 8px 0; }
-button {
-    font-family: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border-strong);
-    background: #fff;
-    padding: 6px 12px;
-    color: var(--color-text);
+h1, h2, h3, h4, p { margin: 0; }
+h2 { font-size: 20px; line-height: 1.4; font-weight: 700; }
+h3 { font-size: 16px; line-height: 1.5; font-weight: 700; }
+h4 { font-size: 15px; line-height: 1.5; font-weight: 700; }
+ul { margin: 0; padding-left: 1.4em; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.text-muted { color: var(--c-text-sub); }
+.visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-button:hover { background: #f0f2f5; }
-button:disabled { cursor: not-allowed; opacity: 0.5; }
-button.primary {
-    background: var(--color-primary);
-    border-color: var(--color-primary-dark);
-    color: #fff;
+.skip-link {
+    position: absolute; left: 8px; top: -48px; z-index: 2000;
+    background: var(--c-bg); color: var(--c-primary);
+    padding: 8px 14px; border: 1px solid var(--c-primary);
 }
-button.primary:hover { background: var(--color-primary-dark); }
-button.danger {
-    background: #fff;
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-}
-button.danger:hover { background: var(--color-danger-bg); }
-button.small { padding: 3px 8px; font-size: 12px; }
-input[type="text"], input[type="url"], input[type="search"], select, textarea {
-    font-family: inherit;
-    font-size: 13px;
-    padding: 5px 8px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius);
-    background: #fff;
-    color: var(--color-text);
-}
-label { font-size: 12px; color: var(--color-text-muted); display: block; margin-bottom: 3px; }
-.field { margin-bottom: 10px; }
-.field-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.field-row .field { flex: 1; min-width: 180px; }
+.skip-link:focus { top: 8px; }
 
-header {
-    background: var(--color-panel);
-    border-bottom: 1px solid var(--color-border);
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
+/* フォーカス表示（キーボード操作時。黒の輪郭と黄色のリングで背景を問わず視認できる） */
+:focus { outline: none; }
+:focus-visible {
+    outline: 3px solid var(--c-text);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--c-focus);
 }
-header .brand { display: flex; align-items: baseline; gap: 8px; }
-header .brand h1 { font-size: 18px; }
-header .brand .version { font-size: 12px; color: var(--color-text-muted); }
-header .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-header .autosave-note { font-size: 11px; color: var(--color-text-muted); }
 
-nav.tabs {
-    display: flex;
-    background: var(--color-panel);
-    border-bottom: 1px solid var(--color-border);
-    padding: 0 20px;
-    gap: 4px;
-    flex-wrap: wrap;
+/* ---- レイアウト ---- */
+.container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+header.app-header { border-bottom: 1px solid var(--c-line); }
+header.app-header .container {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px 16px; padding-top: 12px; padding-bottom: 12px;
 }
-nav.tabs button {
-    border: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
-    background: transparent;
-    padding: 10px 14px;
-    font-size: 14px;
-    color: var(--color-text-muted);
-}
-nav.tabs button.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-    font-weight: 600;
-}
-nav.tabs button:hover { background: var(--color-primary-bg); }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-size: 20px; font-weight: 700; line-height: 1.4; }
+.brand .version { font-size: 13px; color: var(--c-text-sub); }
+.header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.header-actions .note { font-size: 13px; color: var(--c-text-sub); }
+main.container { padding-top: 24px; padding-bottom: 64px; }
 
-main { padding: 18px 20px 60px; max-width: 1200px; margin: 0 auto; }
+.section + .section { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--c-line); }
+.section-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px;
+}
+.section-head .lead { margin-top: 4px; }
+.lead { color: var(--c-text-sub); font-size: 14px; max-width: 72em; }
+.section > .lead { margin-bottom: 12px; }
+
+/* ---- タブ ---- */
+nav.tabs { border-bottom: 1px solid var(--c-line-strong); }
+nav.tabs .container { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab-btn {
+    font: inherit; font-size: 15px; color: var(--c-text);
+    background: transparent; border: 0; border-bottom: 4px solid transparent;
+    margin-bottom: -1px; padding: 10px 20px 8px; cursor: pointer;
+}
+.tab-btn:hover { background: var(--c-bg-subtle); }
+.tab-btn[aria-selected="true"] { color: var(--c-primary); font-weight: 700; border-bottom-color: var(--c-primary); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-.card {
-    background: var(--color-panel);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 16px;
+/* ---- ボタン（主操作 / 副操作 / 危険操作） ---- */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 36px; padding: 4px 16px;
+    font: inherit; font-size: 14px; line-height: 1.4; font-weight: 600;
+    white-space: nowrap; cursor: pointer;
+    color: var(--c-primary); background: var(--c-bg);
+    border: 1px solid var(--c-primary); border-radius: var(--radius);
 }
-.card > h2 { font-size: 15px; }
-.hint {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 8px 10px;
-    margin-bottom: 12px;
-}
-.sample-banner {
-    background: var(--color-warning-bg);
-    border: 1px solid #e8c766;
-    color: var(--color-warning);
-    border-radius: var(--radius);
-    padding: 8px 12px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
+.btn:hover { background: var(--c-primary-bg); color: var(--c-primary-hover); border-color: var(--c-primary-hover); }
+.btn:active { background: #d9e6ff; color: var(--c-primary-active); }
+.btn-primary { color: #fff; background: var(--c-primary); }
+.btn-primary:hover { color: #fff; background: var(--c-primary-hover); }
+.btn-primary:active { color: #fff; background: var(--c-primary-active); }
+.btn-danger { color: var(--c-error); border-color: var(--c-error); }
+.btn-danger:hover { color: var(--c-error); background: var(--c-error-bg); border-color: var(--c-error); }
+.btn-danger:active { background: #f8d9d9; color: var(--c-error); }
+.btn-sm { min-height: 28px; padding: 2px 10px; font-size: 13px; }
+.btn:disabled, .btn:disabled:hover {
+    cursor: not-allowed; color: var(--c-disabled-text);
+    background: var(--c-disabled-bg); border-color: var(--c-line);
 }
 
-.toolbar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    margin-bottom: 12px;
+/* ---- フォーム ---- */
+label, .label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.required { font-size: 12px; font-weight: 400; color: var(--c-error); margin-left: 6px; }
+.field-hint { font-size: 13px; color: var(--c-text-sub); margin-bottom: 6px; }
+.field { margin-bottom: 16px; }
+.field-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.field-row > .field { flex: 1 1 220px; }
+input[type="text"], input[type="search"], select, textarea {
+    display: block; width: 100%; min-height: 36px; padding: 6px 10px;
+    font: inherit; font-size: 15px; color: var(--c-text);
+    background: var(--c-bg); border: 1px solid var(--c-line-strong); border-radius: var(--radius);
 }
-.toolbar .field { margin-bottom: 0; }
+input::placeholder, textarea::placeholder { color: #6b6b6b; }
+input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--c-primary); flex: 0 0 auto; }
+label.check, .check {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 400; margin: 0; cursor: pointer;
+}
+.field-inline { margin-bottom: 0; }
+.filters { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; }
+.filters .field { margin-bottom: 0; }
+.filters .field-search { flex: 0 1 280px; }
+.filters select { width: auto; min-width: 140px; }
+.filters .spacer { margin-left: auto; }
+.result-count { font-size: 13px; color: var(--c-text-sub); margin-bottom: 6px; }
+.form-narrow { max-width: 640px; }
 
+/* ---- テーブル ---- */
 .table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-th, td {
-    border-bottom: 1px solid var(--color-border);
-    padding: 7px 9px;
-    text-align: left;
-    vertical-align: top;
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td {
+    padding: 10px 12px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--c-line);
 }
-th { background: var(--color-bg); font-weight: 600; white-space: nowrap; }
-td.wrap-cell { max-width: 320px; word-break: break-all; }
-tr.disabled-row { color: var(--color-disabled); }
-tr:hover td { background: #fafbfc; }
-.col-actions { white-space: nowrap; text-align: right; }
-.col-actions button { margin-left: 4px; }
+.data-table th {
+    background: var(--c-bg-subtle); font-weight: 700; white-space: nowrap;
+    border-top: 1px solid var(--c-line-strong); border-bottom: 1px solid var(--c-line-strong);
+}
+.data-table tbody tr:hover td { background: #fafafa; }
+.data-table tr.row-disabled td { color: var(--c-text-sub); background: #fafafa; }
+.data-table .cell-wrap { overflow-wrap: anywhere; }
+.data-table .col-actions { text-align: right; }
+.data-table-systems { table-layout: fixed; min-width: 980px; }
+.data-table-systems .c-prio { width: 150px; }
+.data-table-systems .c-state { width: 88px; }
+.data-table-systems .c-name { width: 22%; }
+.data-table-systems .c-route { width: 15%; }
+.data-table-systems .c-test { width: 128px; }
+.data-table-systems .c-actions { width: 132px; }
+.cell-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+.prio-cell { display: flex; align-items: center; gap: 6px; }
+.prio-cell .prio-no { min-width: 1.6em; font-weight: 700; text-align: right; }
+.sys-note { font-size: 13px; color: var(--c-text-sub); }
+.cond-list { list-style: none; margin: 0; padding: 0; }
+.cond-list li { margin-bottom: 3px; }
+.cond-list .cond-kind { font-size: 13px; color: var(--c-text-sub); margin-right: 6px; }
+.cond-list .cond-more { font-size: 13px; color: var(--c-text-sub); }
+.status-fail { color: var(--c-error); font-weight: 700; }
+.status-sub { display: block; font-size: 13px; color: var(--c-text-sub); white-space: nowrap; }
+.empty-note { padding: 16px 0; color: var(--c-text-sub); }
+.section-head + .empty-note { padding-top: 0; }
 
-.badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
+/* ---- メッセージ（エラー・警告・お知らせ。ラベル文字で種別を示す） ---- */
+.alert {
+    border: 1px solid var(--c-line-strong); border-left-width: 6px;
+    background: var(--c-bg-subtle); padding: 8px 12px; margin-bottom: 8px; font-size: 14px;
 }
-.badge-pass { background: var(--color-success-bg); color: var(--color-success); }
-.badge-fail { background: var(--color-danger-bg); color: var(--color-danger); }
-.badge-warn { background: var(--color-warning-bg); color: var(--color-warning); }
-.badge-neutral { background: var(--color-bg); color: var(--color-text-muted); }
-.badge-on { background: var(--color-success-bg); color: var(--color-success); }
-.badge-off { background: var(--color-bg); color: var(--color-disabled); }
+.alert-label { font-weight: 700; margin-right: 8px; }
+.alert-error { border-color: var(--c-error); background: var(--c-error-bg); }
+.alert-error .alert-label { color: var(--c-error); }
+.alert-warning { border-color: var(--c-warning-line); background: var(--c-warning-bg); }
+.alert-warning .alert-label { color: var(--c-warning); }
+.alert-info { border-color: var(--c-line-strong); }
+.alert-with-action { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+.alert-group-title { font-size: 14px; margin: 12px 0 6px; }
+#sampleBannerSystems .alert { margin-bottom: 24px; }
 
-.condition-tag {
-    display: block;
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 12px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin: 2px 0;
-    word-break: break-all;
-}
+/* ---- 結果表示 ---- */
+.kv { display: grid; grid-template-columns: 11em 1fr; margin: 12px 0 0; border-top: 1px solid var(--c-line); }
+.kv dt, .kv dd { margin: 0; padding: 8px 4px; border-bottom: 1px solid var(--c-line); }
+.kv dt { color: var(--c-text-sub); font-size: 14px; }
+.kv dd { overflow-wrap: anywhere; }
+.kv dd.kv-main { font-weight: 700; }
+.summary-line { margin-bottom: 12px; }
+.summary-line span + span::before { content: "／"; margin: 0 8px; color: var(--c-line-strong); font-weight: 400; }
+.sub-title { font-size: 15px; margin: 16px 0 6px; }
+.check-table th { width: 12em; border-top: 0; }
+.check-table td { overflow-wrap: anywhere; }
 
-.msg-list { list-style: none; margin: 0; padding: 0; }
-.msg-list li {
-    padding: 7px 10px;
-    border-radius: var(--radius);
-    margin-bottom: 6px;
-    font-size: 13px;
-    border: 1px solid transparent;
+/* ---- コード・長い文字列（画面を占有しないよう高さを制限し、コピー操作を中心にする） ---- */
+.code-box {
+    display: block; width: 100%; margin: 0; padding: 10px 12px;
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+    color: var(--c-text); background: var(--c-bg-subtle);
+    border: 1px solid var(--c-line); border-radius: var(--radius);
+    max-height: 280px; overflow: auto;
 }
-.msg-list li.error { background: var(--color-danger-bg); color: var(--color-danger); border-color: #f0b8b0; }
-.msg-list li.warning { background: var(--color-warning-bg); color: var(--color-warning); border-color: #e8c766; }
-.msg-list li .icon { margin-right: 4px; }
+pre.code-box { white-space: pre; }
+textarea.code-box { white-space: pre-wrap; overflow-wrap: anywhere; resize: vertical; min-height: 72px; }
+details.disclosure { margin-top: 8px; }
+details.disclosure > summary {
+    display: inline-block; cursor: pointer; font-size: 14px; color: var(--c-primary);
+    text-decoration: underline; text-underline-offset: 3px; padding: 2px 0;
+}
+details.disclosure[open] > summary { margin-bottom: 8px; }
+.output { padding: 16px 0; }
+.output + .output { border-top: 1px solid var(--c-line); }
+.output-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px 16px; }
+.output-head .lead { margin-top: 2px; }
+.output-meta { font-size: 13px; color: var(--c-text-sub); margin-top: 2px; }
+.output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.output .alert { margin-top: 8px; margin-bottom: 0; }
+.status-line { margin-top: 8px; }
+.status-line .status-label { color: var(--c-text-sub); margin-right: 8px; }
+.notes { font-size: 14px; color: var(--c-text-sub); margin-top: 8px; }
+.notes li { margin-bottom: 2px; }
 
-pre.code-preview {
-    background: #1e2430;
-    color: #e6e9ef;
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    overflow-x: auto;
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 12.5px;
-    line-height: 1.6;
-    max-height: 520px;
-}
-
-.result-panel dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 4px 14px;
-    margin: 0;
-}
-.result-panel dt { color: var(--color-text-muted); white-space: nowrap; }
-.result-panel dd { margin: 0; word-break: break-all; }
-
-.summary-grid {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-}
-.summary-tile {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 10px 18px;
-    min-width: 110px;
-    text-align: center;
-}
-.summary-tile .num { font-size: 22px; font-weight: 700; display: block; }
-.summary-tile.total .num { color: var(--color-text); }
-.summary-tile.pass .num { color: var(--color-success); }
-.summary-tile.fail .num { color: var(--color-danger); }
-.summary-tile .label { font-size: 12px; color: var(--color-text-muted); }
-
+/* ---- ダイアログ ---- */
 dialog {
-    border: none;
-    border-radius: 8px;
-    padding: 0;
-    width: min(680px, 92vw);
-    max-height: 88vh;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    width: min(720px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    padding: 0; color: var(--c-text); background: var(--c-bg);
+    border: 1px solid var(--c-line-strong); border-radius: var(--radius);
 }
-dialog::backdrop { background: rgba(20, 24, 32, 0.45); }
-dialog .dialog-head {
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--color-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+dialog.dialog-narrow { width: min(560px, calc(100vw - 32px)); }
+dialog[open] { display: flex; flex-direction: column; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+.dialog-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 24px; border-bottom: 1px solid var(--c-line);
 }
-dialog .dialog-body { padding: 14px 18px; overflow-y: auto; max-height: 62vh; }
-dialog .dialog-foot {
-    padding: 12px 18px;
-    border-top: 1px solid var(--color-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+.dialog-head h2 { font-size: 18px; }
+.dialog-body { flex: 1 1 auto; overflow-y: auto; padding: 20px 24px; }
+.dialog-foot {
+    display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px;
+    padding: 12px 24px; border-top: 1px solid var(--c-line);
 }
-dialog .dialog-error {
-    color: var(--color-danger);
-    background: var(--color-danger-bg);
-    border-radius: var(--radius);
-    padding: 6px 10px;
-    font-size: 12px;
-    margin-top: 6px;
-    display: none;
-}
-dialog .dialog-error.show { display: block; }
+.dialog-error { display: none; flex: 1 0 100%; margin: 0; }
+.dialog-error.show { display: block; }
+.form-section + .form-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--c-line); }
+.form-section > h3 { margin-bottom: 4px; }
+.form-section > .lead { margin-bottom: 12px; }
+.rule-group { margin-bottom: 16px; }
 
-.subsection-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin: 14px 0 6px;
-    padding-top: 10px;
-    border-top: 1px solid var(--color-border);
-}
-.dyn-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin-bottom: 6px;
-}
-.dyn-row select { flex: 0 0 200px; }
-.dyn-row input[type="text"] { flex: 1; }
-.dyn-row .remove-row { flex: 0 0 auto; }
-.condition-row { margin-bottom: 8px; }
-.cond-caption {
-    font-size: 11px;
-    color: var(--color-text-muted);
-    margin: 1px 0 0 2px;
-}
-/* このバージョンでは扱えない条件の種類（古いJSONの読み込み等）を選び直させるための強調表示 */
-.condition-row.condition-unknown .cond-type { border-color: var(--color-danger); }
-.condition-row.condition-unknown .cond-caption { color: var(--color-danger); }
+/* 条件・テストURLの入力行（見出し行と列位置を揃え、削除ボタンは常に行末に置く） */
+.rows-head, .rows-item { display: grid; gap: 8px 8px; align-items: start; }
+.rows-conditions { grid-template-columns: 220px minmax(0, 1fr) 64px; }
+.rows-testurls { grid-template-columns: minmax(0, 1fr) 240px 64px; }
+.rows-head { font-size: 13px; font-weight: 700; color: var(--c-text-sub); margin-bottom: 4px; }
+.rows-item { margin-bottom: 10px; }
+.rows-item .remove-row { width: 100%; padding-left: 0; padding-right: 0; }
+.cond-caption { font-size: 13px; color: var(--c-text-sub); margin-top: 3px; }
+.condition-row.condition-unknown .cond-type { border-color: var(--c-error); border-width: 2px; }
+.condition-row.condition-unknown .cond-caption { color: var(--c-error); font-weight: 700; }
+.rows-add { margin-top: 2px; }
+.route-detail { margin-top: 6px; font-size: 13px; color: var(--c-text-sub); }
+.note-box { margin-top: 16px; padding: 10px 12px; background: var(--c-bg-subtle); border-radius: var(--radius); }
+.note-box .note-title { font-size: 13px; font-weight: 700; color: var(--c-text-sub); margin-bottom: 2px; }
+.note-box .note-text { font-size: 14px; }
 
-.rule-block {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-bg);
-    padding: 12px 14px 14px;
-    margin-bottom: 12px;
-}
-.rule-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    margin-bottom: 6px;
-}
-.rule-arrow {
-    text-align: center;
-    color: var(--color-primary);
-    font-size: 12px;
-    font-weight: 600;
-    margin: 10px 0;
-}
-.rule-arrow .arrow-glyph {
-    display: block;
-    font-size: 18px;
-    line-height: 1.2;
-}
-.route-detail {
-    margin-top: 7px;
-    font-size: 12px;
-    color: var(--color-text-muted);
-    line-height: 1.6;
-}
-
-.preview-box {
-    border-left: 3px solid var(--color-primary);
-    background: var(--color-primary-bg);
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin-bottom: 14px;
-}
-.preview-box .preview-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-primary-dark);
-    margin-bottom: 3px;
-}
-.preview-box .preview-text {
-    font-size: 13px;
-    color: var(--color-text);
-    line-height: 1.5;
-}
-.preview-box .preview-text.text-muted { color: var(--color-text-muted); }
-
+/* ---- トースト ---- */
 #toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1f2430;
-    color: #fff;
-    padding: 9px 18px;
-    border-radius: 6px;
-    font-size: 13px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-    z-index: 1000;
-    max-width: 80vw;
-    text-align: center;
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    max-width: min(640px, calc(100vw - 32px)); padding: 10px 18px;
+    background: var(--c-text); color: #fff; border-radius: var(--radius);
+    font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 3000;
 }
 #toast.show { opacity: 1; }
 
-.data-url-box {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: "Consolas", "SFMono-Regular", Menlo, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 160px;
-    overflow-y: auto;
-    resize: vertical;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 8px 10px;
-    background: var(--color-bg);
-    color: var(--color-text);
-    margin-bottom: 2px;
+@media (max-width: 720px) {
+    .container { padding: 0 16px; }
+    main.container { padding-top: 16px; }
+    .tab-btn { padding: 10px 12px 8px; }
+    .rows-head { display: none; }
+    .rows-conditions, .rows-testurls { grid-template-columns: minmax(0, 1fr) 64px; }
+    .rows-item { padding-bottom: 10px; border-bottom: 1px solid var(--c-line); }
+    .rows-item > .cond-type, .rows-item > .turl-url { grid-column: 1; grid-row: 1; }
+    .rows-item > .cond-field, .rows-item > .turl-route { grid-column: 1; grid-row: 2; }
+    .rows-item > .remove-row { grid-column: 2; grid-row: 1; }
+    .dialog-head, .dialog-body, .dialog-foot { padding-left: 16px; padding-right: 16px; }
+    .dialog-foot .btn { flex: 1 1 auto; }
+    .kv { grid-template-columns: 1fr; }
+    .kv dt { border-bottom: 0; padding-bottom: 0; }
 }
-
-.mono { font-family: "Consolas", "SFMono-Regular", Menlo, monospace; }
-.text-muted { color: var(--color-text-muted); }
-.empty-note { color: var(--color-text-muted); font-size: 13px; padding: 14px 4px; }
-.priority-controls { display: inline-flex; gap: 2px; }
-.priority-controls button { padding: 1px 6px; }
+@media (prefers-reduced-motion: reduce) {
+    #toast { transition: none; }
+}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">メインコンテンツへ移動</a>
 
-<header>
-    <div class="brand">
-        <h1>iProxypac</h1>
-        <span class="version">v0.2.0</span>
-    </div>
-    <div class="actions">
-        <span class="autosave-note">変更内容はブラウザに自動保存されます</span>
-        <button id="btnExportJson" type="button">JSON書き出し</button>
-        <button id="btnImportJson" type="button">JSON読み込み</button>
-        <input id="fileImportJson" type="file" accept="application/json,.json" style="display:none">
+<header class="app-header">
+    <div class="container">
+        <div class="brand">
+            <h1>iProxypac</h1>
+            <span class="version">v0.2.0</span>
+        </div>
+        <div class="header-actions">
+            <span class="note">変更内容はブラウザに自動保存されます</span>
+            <button id="btnExportJson" type="button" class="btn">JSON書き出し</button>
+            <button id="btnImportJson" type="button" class="btn">JSON読み込み</button>
+            <input id="fileImportJson" type="file" accept="application/json,.json" hidden aria-label="読み込むJSONファイル">
+        </div>
     </div>
 </header>
 
-<nav class="tabs">
-    <button type="button" class="tab-btn active" data-tab="systems">システム</button>
-    <button type="button" class="tab-btn" data-tab="routes">アクセス経路</button>
-    <button type="button" class="tab-btn" data-tab="tests">テスト</button>
-    <button type="button" class="tab-btn" data-tab="pac">PAC</button>
+<nav class="tabs" aria-label="メニュー">
+    <div class="container" role="tablist">
+        <button type="button" class="tab-btn" role="tab" id="tabbtn-systems" aria-controls="tab-systems" aria-selected="true" data-tab="systems">システム</button>
+        <button type="button" class="tab-btn" role="tab" id="tabbtn-routes" aria-controls="tab-routes" aria-selected="false" tabindex="-1" data-tab="routes">アクセス経路</button>
+        <button type="button" class="tab-btn" role="tab" id="tabbtn-tests" aria-controls="tab-tests" aria-selected="false" tabindex="-1" data-tab="tests">テスト</button>
+        <button type="button" class="tab-btn" role="tab" id="tabbtn-pac" aria-controls="tab-pac" aria-selected="false" tabindex="-1" data-tab="pac">PAC</button>
+    </div>
 </nav>
 
-<main>
+<main id="main" class="container" tabindex="-1">
 
     <!-- ============ システム タブ ============ -->
-    <section id="tab-systems" class="tab-panel active">
-        <div class="hint">
-            国提供システム等を単位として登録します。「この条件に一致したら、この接続方法を使う」という判定条件を1システムに複数登録でき、
-            回帰テスト用のURLも複数登録できます。一覧の優先順位は上にあるほど先に判定されます（先に一致したシステムが優先されます）。
-        </div>
+    <section id="tab-systems" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-systems">
         <div id="sampleBannerSystems"></div>
 
-        <div class="card">
-            <div class="toolbar">
-                <div class="field">
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <h2>システム一覧</h2>
+                    <p class="lead">上にあるシステムほど先に判定され、先に一致した条件が優先されます。</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnAddSystem">システムを追加</button>
+            </div>
+            <div class="filters">
+                <div class="field field-search">
                     <label for="sysSearch">システム名で検索</label>
                     <input type="search" id="sysSearch" placeholder="例: サンプル国システム">
                 </div>
                 <div class="field">
-                    <label for="sysEnabledFilter">有効/無効</label>
+                    <label for="sysEnabledFilter">状態</label>
                     <select id="sysEnabledFilter">
                         <option value="all">すべて</option>
                         <option value="enabled">有効のみ</option>
@@ -470,39 +384,28 @@ dialog .dialog-error.show { display: block; }
                         <option value="untested">未実行のみ</option>
                     </select>
                 </div>
-                <div class="field" style="margin-left:auto;">
-                    <label>&nbsp;</label>
-                    <button type="button" class="primary" id="btnAddSystem">+ システム追加</button>
-                </div>
             </div>
-            <div class="table-wrap" id="systemsTableWrap"></div>
+            <p class="result-count" id="sysCount" role="status"></p>
+            <div class="table-wrap" id="systemsTableWrap" role="region" aria-label="システム一覧の表" tabindex="0"></div>
         </div>
     </section>
 
     <!-- ============ アクセス経路 タブ ============ -->
-    <section id="tab-routes" class="tab-panel">
-        <div class="hint">
-            「アクセス経路」は proxy.pac が return する値（DIRECT や PROXY host:port）をマスターとして管理します。
-            ここで登録した「表示名」は、システム登録画面では「接続方法」の選択肢として表示されます。
-            システム側では実際の値（DIRECT / PROXY host:port など）を個別に書かず、プルダウンから選択します。
-            複数プロキシのフェイルオーバー（例: <span class="mono">PROXY a:8080; PROXY b:8080; DIRECT</span>）も1つの経路として登録できます。
-        </div>
-
-        <div class="card">
-            <h2>既定・共通ルール設定</h2>
-            <div class="field-row">
+    <section id="tab-routes" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-routes">
+        <div class="section">
+            <h2>既定・共通ルール</h2>
+            <div class="form-narrow" style="margin-top:12px;">
                 <div class="field">
-                    <label for="settingDefaultRoute">既定経路（どの条件にも一致しなかった場合）</label>
-                    <select id="settingDefaultRoute"></select>
+                    <label for="settingDefaultRoute">既定経路</label>
+                    <p class="field-hint" id="hintDefaultRoute">どの条件にも一致しなかった場合に使用します。</p>
+                    <select id="settingDefaultRoute" aria-describedby="hintDefaultRoute"></select>
                 </div>
-            </div>
-            <div class="field-row">
-                <div class="field" style="flex: 0 0 auto;">
-                    <label>
-                        <input type="checkbox" id="settingPlainHostEnabled">
+                <div class="field">
+                    <label class="check" for="settingPlainHostEnabled">
+                        <input type="checkbox" id="settingPlainHostEnabled" aria-describedby="hintPlainHost">
                         isPlainHostName の共通ルールを有効にする
                     </label>
-                    <span class="text-muted" style="font-size:12px;">（例: 庁内短縮ホスト名など、ドメイン省略形式のホストに適用。個別システム条件より先に評価されます）</span>
+                    <p class="field-hint" id="hintPlainHost" style="margin:4px 0 0 26px;">庁内の短縮ホスト名など、ドメインを省略した形式のホストに適用します。個別システムの条件より先に評価されます。</p>
                 </div>
                 <div class="field">
                     <label for="settingPlainHostRoute">isPlainHostName 時のアクセス経路</label>
@@ -511,143 +414,172 @@ dialog .dialog-error.show { display: block; }
             </div>
         </div>
 
-        <div class="card">
-            <div class="toolbar">
-                <h2 style="margin:0;">アクセス経路一覧</h2>
-                <div class="field" style="margin-left:auto;">
-                    <button type="button" class="primary" id="btnAddRoute">+ アクセス経路追加</button>
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <h2>アクセス経路一覧</h2>
+                    <p class="lead">proxy.pac が return する値（DIRECT や PROXY host:port）を管理します。ここで付けた表示名が、システム登録画面の「接続方法」の選択肢になります。</p>
                 </div>
+                <button type="button" class="btn btn-primary" id="btnAddRoute">アクセス経路を追加</button>
             </div>
-            <div class="table-wrap" id="routesTableWrap"></div>
+            <div class="table-wrap" id="routesTableWrap" role="region" aria-label="アクセス経路一覧の表" tabindex="0"></div>
         </div>
     </section>
 
     <!-- ============ テスト タブ ============ -->
-    <section id="tab-tests" class="tab-panel">
-        <div class="hint">
-            実際のネットワーク通信は行いません。Chromium系ブラウザがPACへ渡すURLの仕様（path/queryは通常除去される）を模したうえで、
-            生成した proxy.pac の <span class="mono">FindProxyForURL()</span> を実際に実行して判定します。
-        </div>
-
-        <div class="card">
+    <section id="tab-tests" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tests">
+        <div class="section">
             <h2>URL単体テスト</h2>
+            <p class="lead" style="margin:4px 0 12px;">実際の通信は行いません。Chromium系ブラウザがPACへ渡すURL（path/queryは通常除去されます）を模して、生成した proxy.pac の <code>FindProxyForURL()</code> を実行し、判定結果を表示します。</p>
             <div class="field-row">
-                <div class="field" style="flex:3;">
+                <div class="field field-inline" style="flex: 1 1 420px;">
                     <label for="urlTestInput">判定したいURL</label>
                     <input type="text" id="urlTestInput" placeholder="https://service.example.go.jp/login?id=123">
                 </div>
-                <div class="field" style="flex: 0 0 auto; align-self: flex-end;">
-                    <button type="button" class="primary" id="btnRunUrlTest">判定</button>
+                <div class="field field-inline" style="flex: 0 0 auto;">
+                    <button type="button" class="btn btn-primary" id="btnRunUrlTest">判定</button>
                 </div>
             </div>
             <div id="urlTestResult"></div>
         </div>
 
-        <div class="card">
-            <div class="toolbar">
-                <h2 style="margin:0;">共通（ガード）テスト</h2>
-                <span class="text-muted" style="font-size:12px;">特定システムに属さない「対象外URLがDIRECTのままであること」等を確認するテストです。全件回帰テストに常に含まれます。</span>
-                <div class="field" style="margin-left:auto;">
-                    <button type="button" class="primary" id="btnAddGuardTest">+ ガードテスト追加</button>
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <h2>共通（ガード）テスト</h2>
+                    <p class="lead">特定のシステムに属さない、対象外URLがDIRECTのままであること等を確認するテストです。全件回帰テストに常に含まれます。</p>
                 </div>
+                <button type="button" class="btn btn-primary" id="btnAddGuardTest">ガードテストを追加</button>
             </div>
-            <div class="table-wrap" id="guardTableWrap"></div>
+            <div class="table-wrap" id="guardTableWrap" role="region" aria-label="共通（ガード）テストの表" tabindex="0"></div>
         </div>
 
-        <div class="card">
-            <div class="toolbar">
-                <h2 style="margin:0;">全件回帰テスト</h2>
-                <div class="field" style="margin-left:auto;">
-                    <button type="button" class="primary" id="btnRunRegression">全件回帰テスト実行</button>
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <h2>全件回帰テスト</h2>
+                    <p class="lead">各システムの登録済みテストURLと、共通（ガード）テストをまとめて実行します。</p>
                 </div>
+                <button type="button" class="btn btn-primary" id="btnRunRegression">全件回帰テストを実行</button>
             </div>
             <div id="regressionResult"></div>
         </div>
     </section>
 
     <!-- ============ PAC タブ ============ -->
-    <section id="tab-pac" class="tab-panel">
-        <div class="hint">
-            設定内容の検証・PACの構文検証・全件回帰テストを行ったうえで proxy.pac を生成します。
-            エラーがある場合は生成できません。警告や回帰テストのFAILがあっても出力自体は可能ですが、内容を確認のうえ本番投入してください。
+    <section id="tab-pac" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-pac">
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <h2>PAC生成</h2>
+                    <p class="lead">入力検証・PAC構文検証・全件回帰テストを行ったうえで出力を生成します。入力検証にエラーがある場合は生成できません。</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnGeneratePac">検証してPACを生成</button>
+            </div>
+            <p class="status-line" id="pacStatus"></p>
+            <div id="pacStaleBanner"></div>
         </div>
 
-        <div class="card">
-            <button type="button" class="primary" id="btnGeneratePac">検証してPACを生成</button>
-        </div>
-
-        <div class="card">
-            <h2>入力検証結果</h2>
+        <div class="section">
+            <h2>検証結果</h2>
+            <div class="table-wrap" style="margin-top:12px;"><table class="data-table check-table">
+                <caption class="visually-hidden">検証項目ごとの結果</caption>
+                <tbody id="pacCheckSummary"></tbody>
+            </table></div>
             <div id="validationResult"></div>
-        </div>
-
-        <div class="card" id="syntaxCard" style="display:none;">
-            <h2>PAC構文検証結果</h2>
             <div id="syntaxResult"></div>
+            <details class="disclosure" id="pacRegressionDetails" hidden>
+                <summary>回帰テストの内訳を表示</summary>
+                <div id="pacRegressionResult"></div>
+            </details>
         </div>
 
-        <div class="card" id="regressionSummaryCard" style="display:none;">
-            <h2>回帰テスト結果（生成PACに対する実行結果）</h2>
-            <div id="pacRegressionResult"></div>
-        </div>
-
-        <div class="card" id="pacPreviewCard" style="display:none;">
-            <div class="toolbar">
-                <h2 style="margin:0;">生成された proxy.pac</h2>
-                <div class="field" style="margin-left:auto; display:flex; gap:8px;">
-                    <button type="button" id="btnCopyPac">コピー</button>
-                    <button type="button" class="primary" id="btnDownloadPac">proxy.pac をダウンロード</button>
+        <div class="section" id="pacOutputSection">
+            <div class="section-head">
+                <div>
+                    <h2>通常の proxy.pac</h2>
+                    <p class="lead">コメント付きの整形済みファイルです。ファイルとして配置する場合に使用します。</p>
+                    <p class="output-meta" id="pacFileMeta"></p>
+                </div>
+                <div class="output-actions" id="pacOutputActions" hidden>
+                    <button type="button" class="btn" id="btnCopyPac">コピー</button>
+                    <button type="button" class="btn" id="btnDownloadPac">proxy.pac をダウンロード</button>
                 </div>
             </div>
-            <pre class="code-preview" id="pacCodePreview"></pre>
+            <p class="empty-note" id="pacOutputEmpty">まだ生成されていません。「検証してPACを生成」を実行してください。</p>
+            <div id="pacWarning"></div>
+            <details class="disclosure" id="pacOutputDetails" hidden>
+                <summary>内容を表示</summary>
+                <pre class="code-box" id="pacCodePreview" tabindex="0" aria-label="生成された proxy.pac の内容"></pre>
+            </details>
         </div>
 
-        <div class="card" id="browserLaunchCard" style="display:none;">
+        <div class="section" id="browserLaunchCard">
             <h2>ブラウザ起動用</h2>
-            <p class="hint" style="margin-top:0;">
-                生成PACをUTF-8でBase64化し、Chromium系ブラウザの <span class="mono">--proxy-pac-url</span> へ
-                直接渡せる文字列を作成します。文字数を抑えるため、この用途のPACのみコメントを削除した軽量版を使用します
-                （<span class="mono">proxy.pac</span> 本体は上記のとおりコメントを維持したまま出力されます）。
-            </p>
-            <div id="browserLaunchConsistency"></div>
+            <p class="lead" style="margin-top:4px;">生成PACをUTF-8でBase64化し、Chromium系ブラウザの <code>--proxy-pac-url</code> へ直接渡せる文字列を作成します。文字数を抑えるため、この用途のPACのみコメントを削除した軽量版を使用します（通常の proxy.pac はコメントを維持したまま出力されます）。</p>
+            <p class="empty-note" id="browserLaunchEmpty">まだ生成されていません。「検証してPACを生成」を実行してください。</p>
+            <div id="browserLaunchConsistency" style="margin-top:12px;"></div>
+            <div id="browserLaunchWarning"></div>
             <div id="browserLaunchBody">
-                <div id="browserLaunchSizeSummary" class="result-panel"></div>
-
-                <div class="toolbar" style="margin:10px 0; flex-wrap:wrap;">
-                    <button type="button" id="btnCopyDataUrl">data URLをコピー</button>
-                    <button type="button" id="btnCopyPacArg">起動引数をコピー</button>
-                    <button type="button" id="btnCopyEdgeCmd">Edge用をコピー</button>
-                    <button type="button" id="btnCopyChromeCmd">Chrome用をコピー</button>
-                </div>
-                <div id="browserLaunchWarning"></div>
-
-                <details id="browserLaunchDetails">
-                    <summary style="cursor:pointer; font-size:13px; font-weight:600;">詳細を表示（data URL・起動引数・ショートカット例）</summary>
-
-                    <div class="subsection-title">Base64 PAC data URL</div>
-                    <textarea class="data-url-box" id="dataUrlBox" readonly rows="4"></textarea>
-                    <p class="hint" style="margin:4px 0 12px;"><span id="dataUrlSizeLine"></span></p>
-
-                    <div class="subsection-title">起動引数のみ（既存ショートカットへの追記・他の起動方法への利用向け）</div>
-                    <textarea class="data-url-box" id="pacArgBox" readonly rows="4"></textarea>
-                    <p class="hint" style="margin:4px 0 12px;"><span id="pacArgSizeLine"></span></p>
-
-                    <div class="subsection-title">Edgeショートカット用（例）</div>
-                    <textarea class="data-url-box" id="edgeCmdBox" readonly rows="4"></textarea>
-                    <p class="hint" style="margin:4px 0 12px;"><span id="edgeCmdSizeLine"></span></p>
-
-                    <div class="subsection-title">Chromeショートカット用（例）</div>
-                    <textarea class="data-url-box" id="chromeCmdBox" readonly rows="4"></textarea>
-                    <p class="hint" style="margin:4px 0 12px;"><span id="chromeCmdSizeLine"></span></p>
-
-                    <div class="hint" style="margin-top:6px;">
-                        実行ファイルのインストール先は端末によって異なるため、上記は一例です。ショートカットの「リンク先」欄などへ貼り付ける際は、
-                        お使いの端末の実際のパスに置き換えてください。<br>
-                        既にEdge / Chromeが起動している場合、指定した起動引数が既存プロセスに引き継がれ、期待どおり適用されない場合があります。
-                        必要に応じてブラウザを完全終了してから起動してください。専用プロファイルを使う場合は、
-                        <span class="mono">--user-data-dir="C:\proxypac-profile"</span> のような引数を追加する方法もあります（任意）。
+                <div class="output">
+                    <div class="output-head">
+                        <div>
+                            <h3>Base64 PAC data URL</h3>
+                            <p class="output-meta" id="dataUrlSizeLine"></p>
+                        </div>
+                        <div class="output-actions">
+                            <button type="button" class="btn" id="btnCopyDataUrl">コピー</button>
+                        </div>
                     </div>
-                </details>
+                    <details class="disclosure">
+                        <summary>内容を表示</summary>
+                        <textarea class="code-box" id="dataUrlBox" readonly rows="4" aria-label="Base64 PAC data URL"></textarea>
+                    </details>
+                </div>
+
+                <div class="output">
+                    <div class="output-head">
+                        <div>
+                            <h3>ブラウザ起動引数</h3>
+                            <p class="lead">既存ショートカットへの追記や、他の起動方法で使用する場合向けです。</p>
+                            <p class="output-meta" id="pacArgSizeLine"></p>
+                        </div>
+                        <div class="output-actions">
+                            <button type="button" class="btn" id="btnCopyPacArg">コピー</button>
+                        </div>
+                    </div>
+                    <details class="disclosure">
+                        <summary>内容を表示</summary>
+                        <textarea class="code-box" id="pacArgBox" readonly rows="4" aria-label="ブラウザ起動引数"></textarea>
+                    </details>
+                </div>
+
+                <div class="output">
+                    <div class="output-head">
+                        <div>
+                            <h3>Edge / Chrome ショートカット用文字列</h3>
+                            <p class="lead">ショートカットの「リンク先」欄に貼り付ける形式の例です。</p>
+                            <p class="output-meta" id="shortcutSizeLine"></p>
+                        </div>
+                        <div class="output-actions">
+                            <button type="button" class="btn" id="btnCopyEdgeCmd">Edge用をコピー</button>
+                            <button type="button" class="btn" id="btnCopyChromeCmd">Chrome用をコピー</button>
+                        </div>
+                    </div>
+                    <details class="disclosure">
+                        <summary>内容を表示</summary>
+                        <label for="edgeCmdBox">Edge用</label>
+                        <textarea class="code-box" id="edgeCmdBox" readonly rows="4"></textarea>
+                        <label for="chromeCmdBox" style="margin-top:10px;">Chrome用</label>
+                        <textarea class="code-box" id="chromeCmdBox" readonly rows="4"></textarea>
+                    </details>
+                </div>
+
+                <ul class="notes">
+                    <li>実行ファイルのインストール先は端末によって異なります。貼り付ける際は、お使いの端末の実際のパスに置き換えてください。</li>
+                    <li>Edge / Chrome が既に起動している場合、起動引数が既存プロセスに引き継がれ、適用されないことがあります。ブラウザを完全終了してから起動してください。</li>
+                    <li>専用プロファイルを使う場合は、<code>--user-data-dir="C:\proxypac-profile"</code> のような引数を追加する方法もあります（任意）。</li>
+                </ul>
             </div>
         </div>
     </section>
@@ -655,125 +587,125 @@ dialog .dialog-error.show { display: block; }
 </main>
 
 <!-- ============ システム編集ダイアログ ============ -->
-<dialog id="systemDialog">
+<dialog id="systemDialog" aria-labelledby="systemDialogTitle">
     <div class="dialog-head">
-        <strong id="systemDialogTitle">システムの追加</strong>
-        <button type="button" class="small" data-close-dialog="systemDialog">✕</button>
+        <h2 id="systemDialogTitle">システムの追加</h2>
+        <button type="button" class="btn btn-sm" data-close-dialog="systemDialog">閉じる</button>
     </div>
     <div class="dialog-body">
-        <div class="field-row">
-            <div class="field" style="flex:2;">
-                <label for="sysFormName">システム名 *</label>
-                <input type="text" id="sysFormName" placeholder="例: サンプル国システムA">
+        <section class="form-section" aria-labelledby="sysSecBasic">
+            <h3 id="sysSecBasic">基本情報</h3>
+            <div class="field-row" style="margin-top:12px;">
+                <div class="field" style="flex: 3 1 260px;">
+                    <label for="sysFormName">システム名<span class="required">必須</span></label>
+                    <input type="text" id="sysFormName" placeholder="例: サンプル国システムA">
+                </div>
+                <div class="field" style="flex: 0 0 auto; min-height: 36px; display:flex; align-items:center;">
+                    <label class="check" for="sysFormEnabled"><input type="checkbox" id="sysFormEnabled" checked>有効</label>
+                </div>
             </div>
-            <div class="field" style="flex:0 0 auto;">
-                <label>
-                    <input type="checkbox" id="sysFormEnabled" checked>
-                    有効
-                </label>
+            <div class="field" style="margin-bottom:0;">
+                <label for="sysFormNote">備考</label>
+                <input type="text" id="sysFormNote" placeholder="例: ○○業務で利用">
             </div>
-        </div>
-        <div class="field">
-            <label for="sysFormNote">備考</label>
-            <input type="text" id="sysFormNote" placeholder="例: ○○業務で利用">
-        </div>
-        <div class="subsection-title" style="margin-top:6px;">接続ルール</div>
-        <p class="hint" style="margin-bottom:10px;">「この条件に一致したら、この接続方法を使う」という1つのルールとして設定します。PACの関数名を知らなくても設定できます。</p>
+        </section>
 
-        <div class="rule-block">
-            <div class="rule-label">このシステムと判定する条件</div>
-            <div id="sysFormConditions"></div>
-            <button type="button" class="small" id="btnAddConditionRow">+ 条件を追加</button>
+        <section class="form-section" aria-labelledby="sysSecRule">
+            <h3 id="sysSecRule">接続ルール</h3>
+            <p class="lead">判定条件のいずれかに一致した場合に、選択した接続方法を使用します。</p>
 
-            <div class="rule-arrow"><span class="arrow-glyph">↓</span>この条件に一致したら</div>
+            <div class="rule-group" role="group" aria-labelledby="sysCondLabel">
+                <div class="label" id="sysCondLabel">判定条件<span class="required">必須</span></div>
+                <div class="rows-head rows-conditions" id="sysFormConditionsHead" aria-hidden="true">
+                    <span>条件の種類</span><span>値</span><span></span>
+                </div>
+                <div id="sysFormConditions"></div>
+                <button type="button" class="btn btn-sm rows-add" id="btnAddConditionRow">条件を追加</button>
+            </div>
 
-            <div class="rule-label">接続方法</div>
-            <select id="sysFormRoute"></select>
-            <div id="sysFormRouteDetail" class="route-detail"></div>
-        </div>
+            <div class="field" style="margin-bottom:0;">
+                <label for="sysFormRoute">接続方法<span class="required">必須</span></label>
+                <select id="sysFormRoute" aria-describedby="sysFormRouteDetail"></select>
+                <div id="sysFormRouteDetail" class="route-detail"></div>
+            </div>
 
-        <div class="preview-box">
-            <div class="preview-title">この設定の意味</div>
-            <div id="sysFormPreview" class="preview-text"></div>
-        </div>
+            <div class="note-box">
+                <div class="note-title">この設定の意味</div>
+                <div id="sysFormPreview" class="note-text" aria-live="polite"></div>
+            </div>
+        </section>
 
-        <div class="subsection-title">回帰テストURL</div>
-        <div id="sysFormTestUrls"></div>
-        <button type="button" class="small" id="btnAddTestUrlRow">+ テストURLを追加</button>
-
-        <div class="dialog-error" id="systemDialogError"></div>
+        <section class="form-section" aria-labelledby="sysSecTest">
+            <h3 id="sysSecTest">回帰テストURL</h3>
+            <p class="lead">「期待する接続方法」が未選択の場合は、このシステムの接続方法で判定します。</p>
+            <div class="rows-head rows-testurls" id="sysFormTestUrlsHead" aria-hidden="true" style="margin-top:12px;">
+                <span>URL</span><span>期待する接続方法</span><span></span>
+            </div>
+            <p class="text-muted" id="sysFormTestUrlsEmpty" style="margin:8px 0 10px;">テストURLは登録されていません。</p>
+            <div id="sysFormTestUrls"></div>
+            <button type="button" class="btn btn-sm rows-add" id="btnAddTestUrlRow">テストURLを追加</button>
+        </section>
     </div>
     <div class="dialog-foot">
-        <span class="text-muted" style="font-size:12px;">回帰テストURLの「期待する接続方法」を未選択の場合はこのシステムの接続方法が使用されます。</span>
-        <div style="display:flex; gap:8px;">
-            <button type="button" data-close-dialog="systemDialog">キャンセル</button>
-            <button type="button" class="primary" id="btnSaveSystem">保存</button>
-        </div>
+        <div class="alert alert-error dialog-error" id="systemDialogError" role="alert"></div>
+        <button type="button" class="btn" data-close-dialog="systemDialog">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="btnSaveSystem">保存</button>
     </div>
 </dialog>
 
 <!-- ============ アクセス経路編集ダイアログ ============ -->
-<dialog id="routeDialog">
+<dialog id="routeDialog" class="dialog-narrow" aria-labelledby="routeDialogTitle">
     <div class="dialog-head">
-        <strong id="routeDialogTitle">アクセス経路の追加</strong>
-        <button type="button" class="small" data-close-dialog="routeDialog">✕</button>
+        <h2 id="routeDialogTitle">アクセス経路の追加</h2>
+        <button type="button" class="btn btn-sm" data-close-dialog="routeDialog">閉じる</button>
     </div>
     <div class="dialog-body">
         <div class="field">
-            <label for="routeFormName">表示名 *</label>
-            <input type="text" id="routeFormName" placeholder="例: 国システム用プロキシ">
-            <span class="text-muted" style="font-size:12px;">システム登録画面の「接続方法」で選択肢として表示される名前です。</span>
+            <label for="routeFormName">表示名<span class="required">必須</span></label>
+            <p class="field-hint" id="hintRouteName">システム登録画面の「接続方法」の選択肢として表示される名前です。</p>
+            <input type="text" id="routeFormName" placeholder="例: 国システム用プロキシ" aria-describedby="hintRouteName">
         </div>
-        <div class="field">
-            <label for="routeFormValue">PACでreturnする値 *</label>
-            <input type="text" id="routeFormValue" placeholder="例: PROXY 192.0.2.10:8080 または DIRECT">
+        <div class="field" style="margin-bottom:0;">
+            <label for="routeFormValue">PACでreturnする値<span class="required">必須</span></label>
+            <p class="field-hint" id="hintRouteValue">複数経路のフェイルオーバーを指定する場合はセミコロンで区切ります。<br>例: <code>PROXY 192.0.2.10:8080; PROXY 192.0.2.11:8080; DIRECT</code></p>
+            <input type="text" id="routeFormValue" placeholder="例: PROXY 192.0.2.10:8080 または DIRECT" aria-describedby="hintRouteValue">
         </div>
-        <p class="text-muted" style="font-size:12px;">
-            複数経路のフェイルオーバーを指定する場合はセミコロンで区切ってください。<br>
-            例: <span class="mono">PROXY 192.0.2.10:8080; PROXY 192.0.2.11:8080; DIRECT</span>
-        </p>
-        <div class="dialog-error" id="routeDialogError"></div>
     </div>
     <div class="dialog-foot">
-        <span></span>
-        <div style="display:flex; gap:8px;">
-            <button type="button" data-close-dialog="routeDialog">キャンセル</button>
-            <button type="button" class="primary" id="btnSaveRoute">保存</button>
-        </div>
+        <div class="alert alert-error dialog-error" id="routeDialogError" role="alert"></div>
+        <button type="button" class="btn" data-close-dialog="routeDialog">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="btnSaveRoute">保存</button>
     </div>
 </dialog>
 
 <!-- ============ ガードテスト編集ダイアログ ============ -->
-<dialog id="guardDialog">
+<dialog id="guardDialog" class="dialog-narrow" aria-labelledby="guardDialogTitle">
     <div class="dialog-head">
-        <strong id="guardDialogTitle">ガードテストの追加</strong>
-        <button type="button" class="small" data-close-dialog="guardDialog">✕</button>
+        <h2 id="guardDialogTitle">ガードテストの追加</h2>
+        <button type="button" class="btn btn-sm" data-close-dialog="guardDialog">閉じる</button>
     </div>
     <div class="dialog-body">
         <div class="field">
-            <label for="guardFormUrl">URL *</label>
+            <label for="guardFormUrl">URL<span class="required">必須</span></label>
             <input type="text" id="guardFormUrl" placeholder="https://example-public-site.example.com/">
         </div>
         <div class="field">
-            <label for="guardFormRoute">期待するアクセス経路 *</label>
+            <label for="guardFormRoute">期待するアクセス経路<span class="required">必須</span></label>
             <select id="guardFormRoute"></select>
         </div>
-        <div class="field">
+        <div class="field" style="margin-bottom:0;">
             <label for="guardFormNote">備考</label>
             <input type="text" id="guardFormNote" placeholder="例: 対象外の一般サイト例">
         </div>
-        <div class="dialog-error" id="guardDialogError"></div>
     </div>
     <div class="dialog-foot">
-        <span></span>
-        <div style="display:flex; gap:8px;">
-            <button type="button" data-close-dialog="guardDialog">キャンセル</button>
-            <button type="button" class="primary" id="btnSaveGuard">保存</button>
-        </div>
+        <div class="alert alert-error dialog-error" id="guardDialogError" role="alert"></div>
+        <button type="button" class="btn" data-close-dialog="guardDialog">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="btnSaveGuard">保存</button>
     </div>
 </dialog>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 "use strict";
@@ -1763,8 +1695,35 @@ function showToast(message) {
 
 function switchTab(tabName) {
     uiState.activeTab = tabName;
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tabName));
+    document.querySelectorAll(".tab-btn").forEach((b) => {
+        const selected = b.dataset.tab === tabName;
+        b.setAttribute("aria-selected", String(selected));
+        b.tabIndex = selected ? 0 : -1;
+    });
     document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tabName));
+}
+
+/* タブの矢印キー操作（←→で移動、Home/Endで先頭・末尾）。選択と同時にフォーカスも移す。 */
+function onTabKeydown(e) {
+    const tabs = Array.from(document.querySelectorAll(".tab-btn"));
+    const current = tabs.indexOf(e.currentTarget);
+    let next = -1;
+    if (e.key === "ArrowRight") next = (current + 1) % tabs.length;
+    else if (e.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    switchTab(tabs[next].dataset.tab);
+    tabs[next].focus();
+}
+
+/*
+ * エラー・警告・お知らせの共通表示。種別をラベル文字で示し、色だけに依存しない。
+ */
+function alertHtml(kind, message, extraClass) {
+    const label = { error: "エラー", warning: "警告", info: "お知らせ" }[kind];
+    return `<div class="alert alert-${kind}${extraClass ? " " + extraClass : ""}"><span class="alert-label">${label}</span>${escapeHtml(message)}</div>`;
 }
 
 function routeOptionsHtml(selectedId, includeBlank, blankLabel) {
@@ -1800,9 +1759,9 @@ function renderSampleBanner() {
     const box = document.getElementById("sampleBannerSystems");
     if (hasSampleData()) {
         box.innerHTML = `
-            <div class="sample-banner">
-                <span>初期サンプルのデータが含まれています（実在のシステム名・IPアドレスは含まれていません）。用途を確認後、不要であればサンプル分のみ削除できます。ご自身で追加したデータと、サンプルを編集して保存したデータは削除されません。</span>
-                <button type="button" id="btnClearSample">サンプルデータを削除</button>
+            <div class="alert alert-info alert-with-action">
+                <span><span class="alert-label">お知らせ</span>初期サンプルのデータが含まれています（実在のシステム名・IPアドレスは含まれていません）。不要な場合はサンプル分のみ削除できます。ご自身で追加したデータと、サンプルを編集して保存したデータは削除されません。</span>
+                <button type="button" class="btn btn-sm" id="btnClearSample">サンプルデータを削除</button>
             </div>`;
         document.getElementById("btnClearSample").addEventListener("click", clearSampleData);
     } else {
@@ -1819,22 +1778,30 @@ function getRegressionStatusForSystem(systemId) {
 }
 
 /*
- * 一覧に出す回帰テスト結果のバッジ。
+ * 一覧に出す回帰テスト結果。状態は文字で示し、FAILのみ強調する。
  * 回帰テストを実行済みでも、テストURLが1件も無いシステムは結果が集計されないため、
  * 「未実行」ではなく「テストURLなし」と表示して再実行を促さないようにする。
  */
-function regressionBadgeHtml(sys) {
-    if (!uiState.lastRegression) return `<span class="badge badge-neutral">未実行</span>`;
-    if (!sys.enabled) return `<span class="badge badge-neutral">対象外（無効）</span>`;
+function regressionStatusHtml(sys) {
+    const urlCount = `<span class="status-sub">テストURL ${sys.testUrls.length}件</span>`;
+    if (!uiState.lastRegression) return `未実行${urlCount}`;
+    if (!sys.enabled) return `対象外（無効）${urlCount}`;
     const status = getRegressionStatusForSystem(sys.id);
-    if (!status || status.total === 0) return `<span class="badge badge-neutral">テストURLなし</span>`;
-    if (status.pass === status.total) return `<span class="badge badge-pass">✓ PASS ${status.pass}/${status.total}</span>`;
-    return `<span class="badge badge-fail">✗ FAIL ${status.total - status.pass}/${status.total}</span>`;
+    if (!status || status.total === 0) return "テストURLなし";
+    if (status.pass === status.total) return `PASS ${status.pass}/${status.total}${urlCount}`;
+    return `<span class="status-fail">FAIL ${status.total - status.pass}/${status.total}</span>${urlCount}`;
 }
 
 function renderSystemsTab() {
     const wrap = document.getElementById("systemsTableWrap");
     const filter = uiState.systemFilter;
+
+    let restoreFocus = null;
+    const active = document.activeElement;
+    if (active && wrap.contains(active) && active.dataset.action) {
+        const activeRow = active.closest("tr[data-system-id]");
+        if (activeRow) restoreFocus = { id: activeRow.dataset.systemId, action: active.dataset.action };
+    }
 
     let list = state.systems.map((s, idx) => ({ sys: s, idx }));
     if (filter.name.trim()) {
@@ -1854,8 +1821,11 @@ function renderSystemsTab() {
         });
     }
 
+    const count = document.getElementById("sysCount");
+    count.textContent = state.systems.length === 0 ? "" : `全 ${state.systems.length} 件中 ${list.length} 件を表示`;
+
     if (state.systems.length === 0) {
-        wrap.innerHTML = `<div class="empty-note">システムが登録されていません。「+ システム追加」から登録してください。</div>`;
+        wrap.innerHTML = `<div class="empty-note">システムが登録されていません。「システムを追加」から登録してください。</div>`;
         return;
     }
     if (list.length === 0) {
@@ -1863,35 +1833,38 @@ function renderSystemsTab() {
         return;
     }
 
-    let html = `<table><thead><tr>
-        <th>優先順位</th><th>有効</th><th>システム名</th><th>接続方法</th>
-        <th>条件</th><th>テストURL数</th><th>回帰結果</th><th class="col-actions">操作</th>
+    let html = `<table class="data-table data-table-systems"><caption class="visually-hidden">システム一覧（優先順位の高い順）</caption><thead><tr>
+        <th scope="col" class="c-prio">優先順位</th><th scope="col" class="c-state">状態</th><th scope="col" class="c-name">システム名</th>
+        <th scope="col" class="c-route">接続方法</th><th scope="col">判定条件</th>
+        <th scope="col" class="c-test">回帰テスト</th><th scope="col" class="c-actions col-actions">操作</th>
     </tr></thead><tbody>`;
 
     list.forEach(({ sys, idx }) => {
-        const statusBadge = regressionBadgeHtml(sys);
-        const condSummary = (sys.conditions || []).slice(0, 3).map((c) => {
+        const name = sys.name || "(名称未設定)";
+        const conds = sys.conditions || [];
+        const condSummary = conds.slice(0, 3).map((c) => {
             const t = CONDITION_TYPES[c.type];
-            return `<span class="condition-tag">${escapeHtml(t ? t.describe(c.value || "") : c.value || "")}</span>`;
-        }).join("") + (sys.conditions.length > 3 ? `<span class="text-muted" style="font-size:11px;">他 ${sys.conditions.length - 3} 件</span>` : "");
+            return `<li><span class="cond-kind">${escapeHtml(t ? t.label : "不明な条件")}</span><span class="mono">${escapeHtml(c.value || "")}</span></li>`;
+        }).join("") + (conds.length > 3 ? `<li class="cond-more">ほか ${conds.length - 3} 件</li>` : "");
 
-        html += `<tr class="${sys.enabled ? "" : "disabled-row"}" data-system-id="${escapeHtml(sys.id)}">
+        html += `<tr class="${sys.enabled ? "" : "row-disabled"}" data-system-id="${escapeHtml(sys.id)}">
             <td>
-                <div class="priority-controls">
-                    <button type="button" class="small" data-action="move-up" ${idx === 0 ? "disabled" : ""} title="優先順位を上げる">▲</button>
-                    <span>${idx + 1}</span>
-                    <button type="button" class="small" data-action="move-down" ${idx === state.systems.length - 1 ? "disabled" : ""} title="優先順位を下げる">▼</button>
+                <div class="prio-cell">
+                    <span class="prio-no">${idx + 1}</span>
+                    <button type="button" class="btn btn-sm" data-action="move-up" ${idx === 0 ? "disabled" : ""} aria-label="「${escapeHtml(name)}」の優先順位を上げる">上へ</button>
+                    <button type="button" class="btn btn-sm" data-action="move-down" ${idx === state.systems.length - 1 ? "disabled" : ""} aria-label="「${escapeHtml(name)}」の優先順位を下げる">下へ</button>
                 </div>
             </td>
-            <td><span class="badge ${sys.enabled ? "badge-on" : "badge-off"}" style="cursor:pointer;" data-action="toggle-enabled" title="クリックで切替">${sys.enabled ? "● 有効" : "○ 無効"}</span></td>
-            <td class="wrap-cell"><strong>${escapeHtml(sys.name || "(名称未設定)")}</strong>${sys.note ? `<br><span class="text-muted" style="font-size:12px;">${escapeHtml(sys.note)}</span>` : ""}</td>
-            <td class="wrap-cell">${escapeHtml(routeNameById(sys.routeId))}</td>
-            <td class="wrap-cell">${condSummary || `<span class="text-muted">未設定</span>`}</td>
-            <td>${sys.testUrls.length}</td>
-            <td>${statusBadge}</td>
+            <td><label class="check"><input type="checkbox" data-action="toggle-enabled" ${sys.enabled ? "checked" : ""} aria-label="「${escapeHtml(name)}」を有効にする">${sys.enabled ? "有効" : "無効"}</label></td>
+            <td class="cell-wrap"><strong>${escapeHtml(name)}</strong>${sys.note ? `<div class="sys-note">${escapeHtml(sys.note)}</div>` : ""}</td>
+            <td class="cell-wrap">${escapeHtml(routeNameById(sys.routeId))}</td>
+            <td class="cell-wrap">${condSummary ? `<ul class="cond-list">${condSummary}</ul>` : `<span class="text-muted">未設定</span>`}</td>
+            <td>${regressionStatusHtml(sys)}</td>
             <td class="col-actions">
-                <button type="button" class="small" data-action="edit">編集</button>
-                <button type="button" class="small danger" data-action="delete">削除</button>
+                <div class="cell-actions">
+                    <button type="button" class="btn btn-sm" data-action="edit" aria-label="「${escapeHtml(name)}」を編集">編集</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete" aria-label="「${escapeHtml(name)}」を削除">削除</button>
+                </div>
             </td>
         </tr>`;
     });
@@ -1902,7 +1875,7 @@ function renderSystemsTab() {
         const id = row.dataset.systemId;
         row.querySelector('[data-action="move-up"]').addEventListener("click", () => Store.moveSystem(id, -1));
         row.querySelector('[data-action="move-down"]').addEventListener("click", () => Store.moveSystem(id, 1));
-        row.querySelector('[data-action="toggle-enabled"]').addEventListener("click", () => Store.toggleSystemEnabled(id));
+        row.querySelector('[data-action="toggle-enabled"]').addEventListener("change", () => Store.toggleSystemEnabled(id));
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openSystemDialog(id));
         row.querySelector('[data-action="delete"]').addEventListener("click", () => {
             const sys = Store.getSystem(id);
@@ -1910,6 +1883,14 @@ function renderSystemsTab() {
             Store.deleteSystem(id);
         });
     });
+
+    // 並び替え・有効/無効の切替は再描画を伴うため、キーボード操作が途切れないようフォーカスを戻す。
+    if (restoreFocus) {
+        const row = wrap.querySelector(`tr[data-system-id="${CSS.escape(restoreFocus.id)}"]`);
+        let target = row && row.querySelector(`[data-action="${restoreFocus.action}"]`);
+        if (target && target.disabled) target = row.querySelector('[data-action="move-up"]:not(:disabled), [data-action="move-down"]:not(:disabled)');
+        if (target) target.focus();
+    }
 }
 
 /* --- システム編集ダイアログ --- */
@@ -1931,6 +1912,7 @@ function openSystemDialog(systemId) {
     const testUrlContainer = document.getElementById("sysFormTestUrls");
     testUrlContainer.innerHTML = "";
     editing.testUrls.forEach((t) => addTestUrlRow(t));
+    renumberDynamicRows();
 
     const dialog = document.getElementById("systemDialog");
     dialog.dataset.systemId = editing.id;
@@ -1964,18 +1946,45 @@ function updateConditionRowCaption(row) {
 }
 
 function addConditionRow(cond) {
+    const capId = "condCaption_" + cond.id;
     const row = el(`
-        <div class="condition-row" data-row-id="${escapeHtml(cond.id)}">
-            <div class="dyn-row">
-                <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
-                <input type="text" class="cond-value" value="${escapeHtml(cond.value || "")}">
-                <button type="button" class="small danger remove-row" title="この条件を削除">削除</button>
+        <div class="condition-row rows-item rows-conditions" data-row-id="${escapeHtml(cond.id)}">
+            <select class="cond-type">${conditionTypeOptionsHtml(cond.type)}</select>
+            <div class="cond-field">
+                <input type="text" class="cond-value" value="${escapeHtml(cond.value || "")}" aria-describedby="${escapeHtml(capId)}">
+                <div class="cond-caption" id="${escapeHtml(capId)}"></div>
             </div>
-            <div class="cond-caption"></div>
+            <button type="button" class="btn btn-danger remove-row">削除</button>
         </div>`);
     updateConditionRowCaption(row);
     document.getElementById("sysFormConditions").appendChild(row);
+    renumberDynamicRows();
     updateSystemDialogPreview();
+}
+
+/*
+ * 条件・テストURLの入力行は増減するため、行番号つきの読み上げ用ラベルと、見出し行・空表示の出し分けをその都度更新する。
+ * （見えるラベルは列見出し。各入力欄には「条件2の値」のように行を特定できる名前を付ける）
+ */
+function renumberDynamicRows() {
+    const condRows = document.querySelectorAll("#sysFormConditions .condition-row");
+    condRows.forEach((row, i) => {
+        const n = i + 1;
+        row.querySelector(".cond-type").setAttribute("aria-label", `条件${n}の種類`);
+        row.querySelector(".cond-value").setAttribute("aria-label", `条件${n}の値`);
+        row.querySelector(".remove-row").setAttribute("aria-label", `条件${n}を削除`);
+    });
+    document.getElementById("sysFormConditionsHead").hidden = condRows.length === 0;
+
+    const urlRows = document.querySelectorAll("#sysFormTestUrls .testurl-row");
+    urlRows.forEach((row, i) => {
+        const n = i + 1;
+        row.querySelector(".turl-url").setAttribute("aria-label", `テストURL${n}のURL`);
+        row.querySelector(".turl-route").setAttribute("aria-label", `テストURL${n}の期待する接続方法`);
+        row.querySelector(".remove-row").setAttribute("aria-label", `テストURL${n}を削除`);
+    });
+    document.getElementById("sysFormTestUrlsHead").hidden = urlRows.length === 0;
+    document.getElementById("sysFormTestUrlsEmpty").hidden = urlRows.length !== 0;
 }
 
 /* 接続方法(経路)の選択に応じて、選んだ経路の実際のPAC値と、DIRECTの場合の補足説明を表示する */
@@ -1988,7 +1997,7 @@ function updateRouteDetail() {
         return;
     }
     const isDirect = route.value.trim() === "DIRECT";
-    box.innerHTML = `<span class="mono">${escapeHtml(route.value)}</span>` +
+    box.innerHTML = `PACの値: <span class="mono">${escapeHtml(route.value)}</span>` +
         (isDirect ? `<br>プロキシを経由せず直接接続します。` : "");
 }
 
@@ -2015,12 +2024,13 @@ function updateSystemDialogPreview() {
 
 function addTestUrlRow(t) {
     const row = el(`
-        <div class="dyn-row testurl-row" data-row-id="${escapeHtml(t.id)}">
-            <input type="text" class="turl-url" placeholder="https://service.example.go.jp/" value="${escapeHtml(t.url || "")}" style="flex:2;">
+        <div class="testurl-row rows-item rows-testurls" data-row-id="${escapeHtml(t.id)}">
+            <input type="text" class="turl-url" placeholder="https://service.example.go.jp/" value="${escapeHtml(t.url || "")}">
             <select class="turl-route">${routeOptionsHtml(t.expectedRouteId, true)}</select>
-            <button type="button" class="small danger remove-row" title="このテストURLを削除">削除</button>
+            <button type="button" class="btn btn-danger remove-row">削除</button>
         </div>`);
     document.getElementById("sysFormTestUrls").appendChild(row);
+    renumberDynamicRows();
 }
 
 function showDialogError(elId, message) {
@@ -2103,16 +2113,18 @@ function renderRoutesTab() {
         wrap.innerHTML = `<div class="empty-note">アクセス経路が登録されていません。</div>`;
         return;
     }
-    let html = `<table><thead><tr><th>表示名</th><th>PACでreturnする値</th><th>使用箇所</th><th class="col-actions">操作</th></tr></thead><tbody>`;
+    let html = `<table class="data-table"><caption class="visually-hidden">アクセス経路一覧</caption><thead><tr><th scope="col">表示名</th><th scope="col">PACでreturnする値</th><th scope="col">使用箇所</th><th scope="col" class="col-actions">操作</th></tr></thead><tbody>`;
     state.routes.forEach((r) => {
         const usages = Store.routeUsage(r.id);
         html += `<tr data-route-id="${escapeHtml(r.id)}">
-            <td>${escapeHtml(r.name)}</td>
-            <td class="wrap-cell mono">${escapeHtml(r.value)}</td>
-            <td>${usages.length ? `<span class="badge badge-neutral" title="${escapeHtml(usages.join("\n"))}">${usages.length} 箇所</span>` : `<span class="text-muted">未使用</span>`}</td>
+            <td class="cell-wrap">${escapeHtml(r.name)}</td>
+            <td class="cell-wrap mono">${escapeHtml(r.value)}</td>
+            <td>${usages.length ? `<span title="${escapeHtml(usages.join("\n"))}">${usages.length} 箇所</span>` : `<span class="text-muted">未使用</span>`}</td>
             <td class="col-actions">
-                <button type="button" class="small" data-action="edit">編集</button>
-                <button type="button" class="small danger" data-action="delete">削除</button>
+                <div class="cell-actions">
+                    <button type="button" class="btn btn-sm" data-action="edit" aria-label="アクセス経路「${escapeHtml(r.name)}」を編集">編集</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete" aria-label="アクセス経路「${escapeHtml(r.name)}」を削除">削除</button>
+                </div>
             </td>
         </tr>`;
     });
@@ -2184,22 +2196,22 @@ function renderUrlTestResult() {
         return;
     }
     if (r.error) {
-        box.innerHTML = `<div class="msg-list"><li class="error" style="list-style:none;"><span class="icon">✗</span>${escapeHtml(r.error)}</li></div>`;
+        box.innerHTML = `<div style="margin-top:12px;">${alertHtml("error", r.error)}</div>`;
         return;
     }
-    const routeDisplay = r.execError ? `<span class="badge badge-fail">実行エラー</span>` : `<span class="mono">${escapeHtml(r.executedRoute)}</span>`;
+    const routeDisplay = r.execError ? `<span class="status-fail">実行エラー</span>` : `<span class="mono">${escapeHtml(r.executedRoute)}</span>`;
     box.innerHTML = `
-        <div class="result-panel" style="margin-top:8px;">
-            <dl>
-                <dt>入力URL</dt><dd class="mono">${escapeHtml(r.rawUrl)}</dd>
-                <dt>PAC評価URL</dt><dd class="mono">${escapeHtml(r.pacUrl)}</dd>
-                <dt>host</dt><dd class="mono">${escapeHtml(r.host)}</dd>
-                <dt>判定結果</dt><dd>${routeDisplay}</dd>
-                <dt>該当システム</dt><dd>${escapeHtml(r.structured.systemName)}</dd>
-                <dt>該当条件</dt><dd class="mono">${r.structured.conditionDesc ? escapeHtml(r.structured.conditionDesc) : "-"}</dd>
-            </dl>
-            ${r.execError ? `<div class="msg-list"><li class="error" style="list-style:none; margin-top:8px;"><span class="icon">✗</span>PAC実行エラー: ${escapeHtml(r.execError)}</li></div>` : ""}
-            ${r.mismatch ? `<div class="msg-list"><li class="warning" style="list-style:none; margin-top:8px;"><span class="icon">⚠</span>生成PACの実行結果と構造化ルールからの期待結果が一致しません（ジェネレータの不具合の可能性があります）。</li></div>` : ""}
+        <dl class="kv">
+            <dt>判定結果</dt><dd class="kv-main">${routeDisplay}</dd>
+            <dt>該当システム</dt><dd>${escapeHtml(r.structured.systemName)}</dd>
+            <dt>該当条件</dt><dd class="mono">${r.structured.conditionDesc ? escapeHtml(r.structured.conditionDesc) : "-"}</dd>
+            <dt>入力URL</dt><dd class="mono">${escapeHtml(r.rawUrl)}</dd>
+            <dt>PAC評価URL</dt><dd class="mono">${escapeHtml(r.pacUrl)}</dd>
+            <dt>host</dt><dd class="mono">${escapeHtml(r.host)}</dd>
+        </dl>
+        <div style="margin-top:12px;">
+            ${r.execError ? alertHtml("error", `PAC実行エラー: ${r.execError}`) : ""}
+            ${r.mismatch ? alertHtml("warning", "生成PACの実行結果と構造化ルールからの期待結果が一致しません（ジェネレータの不具合の可能性があります）。") : ""}
         </div>`;
 }
 
@@ -2209,15 +2221,17 @@ function renderGuardTable() {
         wrap.innerHTML = `<div class="empty-note">ガードテストが登録されていません。対象外URLがDIRECTのままであることを確認するテストの登録を推奨します。</div>`;
         return;
     }
-    let html = `<table><thead><tr><th>URL</th><th>期待するアクセス経路</th><th>備考</th><th class="col-actions">操作</th></tr></thead><tbody>`;
+    let html = `<table class="data-table"><caption class="visually-hidden">共通（ガード）テスト一覧</caption><thead><tr><th scope="col">URL</th><th scope="col">期待するアクセス経路</th><th scope="col">備考</th><th scope="col" class="col-actions">操作</th></tr></thead><tbody>`;
     state.guardTests.forEach((g) => {
         html += `<tr data-guard-id="${escapeHtml(g.id)}">
-            <td class="wrap-cell mono">${escapeHtml(g.url)}</td>
-            <td>${escapeHtml(routeNameById(g.expectedRouteId))}</td>
-            <td class="wrap-cell">${escapeHtml(g.note || "")}</td>
+            <td class="cell-wrap mono">${escapeHtml(g.url)}</td>
+            <td class="cell-wrap">${escapeHtml(routeNameById(g.expectedRouteId))}</td>
+            <td class="cell-wrap">${escapeHtml(g.note || "")}</td>
             <td class="col-actions">
-                <button type="button" class="small" data-action="edit">編集</button>
-                <button type="button" class="small danger" data-action="delete">削除</button>
+                <div class="cell-actions">
+                    <button type="button" class="btn btn-sm" data-action="edit" aria-label="ガードテスト「${escapeHtml(g.url)}」を編集">編集</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete" aria-label="ガードテスト「${escapeHtml(g.url)}」を削除">削除</button>
+                </div>
             </td>
         </tr>`;
     });
@@ -2273,47 +2287,43 @@ function renderRegressionResult(targetElId) {
     const summary = uiState.lastRegression;
     if (!summary) {
         if (uiState.pacStale) {
-            box.innerHTML = `<div class="msg-list"><li class="warning" style="list-style:none;"><span class="icon">⚠</span>設定が変更されたため、回帰テスト結果は無効になりました。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で再実行してください。</li></div>`;
+            box.innerHTML = alertHtml("warning", "設定が変更されたため、回帰テスト結果は無効になりました。「全件回帰テストを実行」または「PAC」タブの「検証してPACを生成」で再実行してください。");
         } else {
-            box.innerHTML = `<div class="empty-note">まだ実行されていません。「全件回帰テスト実行」または「PAC」タブの「検証してPACを生成」で実行できます。</div>`;
+            box.innerHTML = `<p class="empty-note">まだ実行されていません。「全件回帰テストを実行」または「PAC」タブの「検証してPACを生成」で実行できます。</p>`;
         }
         return;
     }
-    let html = `<div class="summary-grid">
-        <div class="summary-tile total"><span class="num">${summary.total}</span><span class="label">テスト対象</span></div>
-        <div class="summary-tile pass"><span class="num">${summary.pass}</span><span class="label">PASS</span></div>
-        <div class="summary-tile fail"><span class="num">${summary.fail}</span><span class="label">FAIL</span></div>
-    </div>`;
+    let html = `<p class="summary-line">
+        <span>テスト対象 <strong>${summary.total}</strong> 件</span>
+        <span>PASS <strong>${summary.pass}</strong> 件</span>
+        <span${summary.fail > 0 ? ` class="status-fail"` : ""}>FAIL <strong>${summary.fail}</strong> 件</span>
+    </p>`;
 
-    html += `<h3 style="font-size:13px;">システム別結果</h3>`;
+    const resultCell = (pass, total) => total === 0 ? "-" : (pass === total ? "PASS" : `<span class="status-fail">FAIL</span>`);
+    html += `<div class="table-wrap"><table class="data-table"><caption class="visually-hidden">回帰テスト結果の内訳</caption><thead><tr>
+        <th scope="col">対象</th><th scope="col">結果</th><th scope="col">PASS / 件数</th>
+    </tr></thead><tbody>`;
+    summary.bySystem.forEach((e) => {
+        html += `<tr><td class="cell-wrap">${escapeHtml(e.name)}</td><td>${resultCell(e.pass, e.total)}</td><td>${e.pass} / ${e.total}</td></tr>`;
+    });
+    html += `<tr><td>共通（ガード）テスト</td><td>${resultCell(summary.guardPass, summary.guardTotal)}</td><td>${summary.guardPass} / ${summary.guardTotal}</td></tr>`;
+    html += `</tbody></table></div>`;
     if (summary.bySystem.length === 0) {
-        html += `<div class="empty-note">システムに登録されたテストURLがありません。</div>`;
-    } else {
-        html += `<ul class="msg-list" style="list-style:none;">`;
-        summary.bySystem.forEach((e) => {
-            const ok = e.pass === e.total;
-            html += `<li class="${ok ? "" : "error"}" style="background:${ok ? "var(--color-success-bg)" : ""}; color:${ok ? "var(--color-success)" : ""};">
-                ${ok ? "✓" : "✗"} ${escapeHtml(e.name)} &nbsp; ${e.pass} / ${e.total}
-            </li>`;
-        });
-        html += `</ul>`;
+        html += `<p class="empty-note">システムに登録されたテストURLがありません。</p>`;
     }
 
-    html += `<h3 style="font-size:13px;">共通（ガード）テスト</h3>
-        <p>${summary.guardPass === summary.guardTotal ? "✓" : "✗"} ${summary.guardPass} / ${summary.guardTotal}</p>`;
-
     if (summary.failures.length > 0) {
-        html += `<h3 style="font-size:13px;">FAIL 詳細</h3><div class="table-wrap"><table><thead><tr>
-            <th>区分</th><th>URL</th><th>期待値</th><th>実際の結果</th><th>該当システム</th><th>該当条件</th>
+        html += `<h3 class="sub-title">FAIL の詳細</h3><div class="table-wrap"><table class="data-table"><caption class="visually-hidden">FAILしたテストの詳細</caption><thead><tr>
+            <th scope="col">区分</th><th scope="col">URL</th><th scope="col">期待値</th><th scope="col">実際の結果</th><th scope="col">該当システム</th><th scope="col">該当条件</th>
         </tr></thead><tbody>`;
         summary.failures.forEach((f) => {
             html += `<tr>
-                <td>${f.scope === "system" ? escapeHtml(f.systemName) : "共通テスト"}</td>
-                <td class="wrap-cell mono">${escapeHtml(f.url)}</td>
-                <td class="mono">${escapeHtml(f.expected || "-")}</td>
-                <td class="mono">${f.error ? `<span class="badge badge-fail">エラー: ${escapeHtml(f.error)}</span>` : escapeHtml(f.actual || "-")}</td>
-                <td>${escapeHtml(f.matchedSystemName || "-")}</td>
-                <td class="mono">${f.matchedCondition ? escapeHtml(f.matchedCondition) : "-"}</td>
+                <td class="cell-wrap">${f.scope === "system" ? escapeHtml(f.systemName) : "共通テスト"}</td>
+                <td class="cell-wrap mono">${escapeHtml(f.url)}</td>
+                <td class="cell-wrap mono">${escapeHtml(f.expected || "-")}</td>
+                <td class="cell-wrap mono">${f.error ? `<span class="status-fail">エラー: ${escapeHtml(f.error)}</span>` : escapeHtml(f.actual || "-")}</td>
+                <td class="cell-wrap">${escapeHtml(f.matchedSystemName || "-")}</td>
+                <td class="cell-wrap mono">${f.matchedCondition ? escapeHtml(f.matchedCondition) : "-"}</td>
             </tr>`;
         });
         html += `</tbody></table></div>`;
@@ -2364,90 +2374,124 @@ function runFullRegressionPipeline() {
  * ========================================================================= */
 function renderPacTab() {
     const run = uiState.regressionRun;
-    renderPacStaleBanner();
-    renderValidationResult(run);
-    renderSyntaxResult(run);
-    renderPacRegressionSummary(run);
-    renderPacPreview(run);
+    renderPacStatus(run);
+    renderPacChecks(run);
+    renderPacOutput(run);
     renderBrowserLaunchSection(run);
 }
 
-function renderPacStaleBanner() {
-    const card = document.getElementById("btnGeneratePac").closest(".card");
-    const existing = card.querySelector(".pac-stale-banner");
-    if (existing) existing.remove();
-    if (uiState.pacStale) {
-        const banner = el(`
-            <div class="msg-list pac-stale-banner" style="margin-top:10px;">
-                <li class="warning" style="list-style:none;">
-                    <span class="icon">⚠</span>設定が変更されています。PACを再生成してください。回帰テスト結果は無効になりました（変更前のPACはダウンロードできません）。
-                </li>
-            </div>`);
-        card.appendChild(banner);
+/* 生成状況は色ではなく文字で示す。異常（生成不可・構文エラー・FAIL）のみ強調する。 */
+function renderPacStatus(run) {
+    let text = "未生成";
+    let isProblem = false;
+    if (!run && uiState.pacStale) {
+        text = "無効（設定が変更されました。再生成してください）";
+    } else if (run) {
+        if (run.validation.errors.length > 0) {
+            text = `生成不可（入力検証エラー ${run.validation.errors.length} 件）`;
+            isProblem = true;
+        } else if (!run.compiled.ok) {
+            text = "生成済み（PAC構文エラーあり）";
+            isProblem = true;
+        } else if (run.summary && run.summary.fail > 0) {
+            text = `生成済み（回帰テスト FAIL ${run.summary.fail} 件）`;
+            isProblem = true;
+        } else {
+            text = "生成済み";
+        }
     }
+    document.getElementById("pacStatus").innerHTML =
+        `<span class="status-label">生成状況</span><strong${isProblem ? ` class="status-fail"` : ""}>${escapeHtml(text)}</strong>`;
+    document.getElementById("pacStaleBanner").innerHTML = uiState.pacStale
+        ? `<div style="margin-top:8px;">${alertHtml("warning", "設定が変更されています。PACを再生成してください。回帰テスト結果は無効になりました（変更前のPACはダウンロードできません）。")}</div>`
+        : "";
 }
 
-function renderValidationResult(run) {
-    const box = document.getElementById("validationResult");
+/*
+ * 検証結果。項目別の結果を表にまとめ、エラー・警告がある場合のみ詳細を表示する。
+ * 正常時は装飾せず、結果を文字で示すだけにする。
+ */
+function renderPacChecks(run) {
     const validation = run ? run.validation : validateConfig(state);
+    const errors = validation.errors.length;
+    const warnings = validation.warnings.length;
+
+    const validationText = errors === 0 && warnings === 0
+        ? "問題なし"
+        : [errors > 0 ? `<span class="status-fail">エラー ${errors} 件</span>` : "", warnings > 0 ? `警告 ${warnings} 件` : ""].filter(Boolean).join(" ／ ");
+
+    let syntaxText = "未実施";
+    if (run && run.compiled) {
+        syntaxText = run.compiled.ok
+            ? "構文エラーなし（FindProxyForURL を定義できました）"
+            : `<span class="status-fail">構文エラーあり</span>`;
+    }
+
+    let regressionText = "未実行";
+    if (run && run.summary) {
+        regressionText = run.summary.fail > 0
+            ? `<span class="status-fail">FAIL ${run.summary.fail} 件</span>（PASS ${run.summary.pass} / ${run.summary.total}）`
+            : `PASS ${run.summary.pass} / ${run.summary.total}`;
+    }
+
+    let launchText = "未実施";
+    if (run && run.pacCodeLite) {
+        if (!run.compiledLite || !run.compiledLite.ok) {
+            launchText = `<span class="status-fail">Base64用PACの構文エラー</span>`;
+        } else if ((run.consistency && !run.consistency.ok) || (run.roundTrip && !run.roundTrip.ok)) {
+            launchText = `<span class="status-fail">不一致あり（コピー不可）</span>`;
+        } else {
+            launchText = "問題なし";
+        }
+    }
+
+    document.getElementById("pacCheckSummary").innerHTML = `
+        <tr><th scope="row">入力検証</th><td>${validationText}</td></tr>
+        <tr><th scope="row">PAC構文検証</th><td>${syntaxText}</td></tr>
+        <tr><th scope="row">回帰テスト</th><td>${regressionText}</td></tr>
+        <tr><th scope="row">ブラウザ起動用PACの整合性</th><td>${launchText}</td></tr>`;
+
     let html = "";
-    if (validation.errors.length === 0 && validation.warnings.length === 0) {
-        html = `<p><span class="badge badge-pass">✓ 検出された問題はありません</span></p>`;
-    } else {
-        if (validation.errors.length > 0) {
-            html += `<h3 style="font-size:13px;">エラー（${validation.errors.length}件、解消するまでPACは生成できません）</h3><ul class="msg-list">`;
-            validation.errors.forEach((e) => { html += `<li class="error"><span class="icon">✗</span>${escapeHtml(e.message)}</li>`; });
-            html += `</ul>`;
-        }
-        if (validation.warnings.length > 0) {
-            html += `<h3 style="font-size:13px;">警告（${validation.warnings.length}件、生成は可能ですが確認を推奨します）</h3><ul class="msg-list">`;
-            validation.warnings.forEach((w) => { html += `<li class="warning"><span class="icon">⚠</span>${escapeHtml(w.message)}</li>`; });
-            html += `</ul>`;
-        }
+    if (errors > 0) {
+        html += `<h3 class="alert-group-title">入力検証エラー（${errors}件。解消するまでPACは生成できません）</h3>`;
+        validation.errors.forEach((e) => { html += alertHtml("error", e.message); });
     }
-    box.innerHTML = html;
-}
+    if (warnings > 0) {
+        html += `<h3 class="alert-group-title">入力検証の警告（${warnings}件。生成は可能ですが確認を推奨します）</h3>`;
+        validation.warnings.forEach((w) => { html += alertHtml("warning", w.message); });
+    }
+    document.getElementById("validationResult").innerHTML = html;
 
-function renderSyntaxResult(run) {
-    const card = document.getElementById("syntaxCard");
-    const box = document.getElementById("syntaxResult");
-    if (!run || !run.compiled) {
-        card.style.display = "none";
-        return;
-    }
-    card.style.display = "";
-    if (run.compiled.ok) {
-        box.innerHTML = `<p><span class="badge badge-pass">✓ 構文エラーなし / FindProxyForURL を定義できました</span></p>`;
-    } else {
-        box.innerHTML = `<ul class="msg-list"><li class="error"><span class="icon">✗</span>構文エラー: ${escapeHtml(run.compiled.error)}</li></ul>`;
+    document.getElementById("syntaxResult").innerHTML = run && run.compiled && !run.compiled.ok
+        ? `<h3 class="alert-group-title">PAC構文検証エラー</h3>${alertHtml("error", run.compiled.error)}`
+        : "";
+
+    const details = document.getElementById("pacRegressionDetails");
+    details.hidden = !(run && run.summary);
+    if (run && run.summary) {
+        renderRegressionResult("pacRegressionResult");
+        if (run.summary.fail > 0) details.open = true;
     }
 }
 
-function renderPacRegressionSummary(run) {
-    const card = document.getElementById("regressionSummaryCard");
-    if (!run || !run.summary) {
-        card.style.display = "none";
+/* 通常の proxy.pac。内容は折りたたみ、コピー・ダウンロード操作を中心にする。 */
+function renderPacOutput(run) {
+    const has = !!(run && run.pacCode);
+    document.getElementById("pacOutputEmpty").hidden = has;
+    document.getElementById("pacOutputActions").hidden = !has;
+    document.getElementById("pacOutputDetails").hidden = !has;
+    const warnBox = document.getElementById("pacWarning");
+    if (!has) {
+        document.getElementById("pacFileMeta").textContent = "";
+        warnBox.innerHTML = "";
         return;
     }
-    card.style.display = "";
-    renderRegressionResult("pacRegressionResult");
-}
-
-function renderPacPreview(run) {
-    const card = document.getElementById("pacPreviewCard");
-    if (!run || !run.pacCode) {
-        card.style.display = "none";
-        return;
-    }
-    card.style.display = "";
     document.getElementById("pacCodePreview").textContent = run.pacCode;
-
-    const warnBox = document.getElementById("pacPreviewCard").querySelector(".pac-warning-banner");
-    if (warnBox) warnBox.remove();
-    if (run.summary && run.summary.fail > 0) {
-        const banner = el(`<div class="msg-list pac-warning-banner" style="margin-top:10px;"><li class="warning"><span class="icon">⚠</span>回帰テストで ${run.summary.fail} 件失敗しています。本番利用前に確認してください。</li></div>`);
-        document.getElementById("pacCodePreview").insertAdjacentElement("afterend", banner);
-    }
+    document.getElementById("pacFileMeta").textContent =
+        `${utf8ByteLength(run.pacCode).toLocaleString()} バイト ／ ${run.pacCode.split("\n").length.toLocaleString()} 行`;
+    warnBox.innerHTML = run.summary && run.summary.fail > 0
+        ? alertHtml("warning", `回帰テストで ${run.summary.fail} 件失敗しています。本番利用前に確認してください。`)
+        : "";
 }
 
 /*
@@ -2465,33 +2509,37 @@ function browserLaunchCopyButtons() {
 }
 
 function renderBrowserLaunchSection(run) {
-    const card = document.getElementById("browserLaunchCard");
-    if (!run || !run.pacCodeLite) {
-        card.style.display = "none";
-        return;
-    }
-    card.style.display = "";
-
+    const emptyBox = document.getElementById("browserLaunchEmpty");
     const bodyBox = document.getElementById("browserLaunchBody");
     const consistencyBox = document.getElementById("browserLaunchConsistency");
+    const warnBox = document.getElementById("browserLaunchWarning");
+
+    if (!run || !run.pacCodeLite) {
+        emptyBox.hidden = false;
+        bodyBox.hidden = true;
+        consistencyBox.innerHTML = "";
+        warnBox.innerHTML = "";
+        browserLaunchCopyButtons().forEach((b) => { b.disabled = true; });
+        return;
+    }
+    emptyBox.hidden = true;
 
     // Base64用PAC自体がコンパイルできない場合、data URL等は算出できないため、
     // 理由だけを表示してコピー操作は行わせない。
     if (!run.compiledLite || !run.compiledLite.ok) {
-        bodyBox.style.display = "none";
+        bodyBox.hidden = true;
+        warnBox.innerHTML = "";
         browserLaunchCopyButtons().forEach((b) => { b.disabled = true; });
         const reason = run.compiledLite ? run.compiledLite.error : "不明なエラー";
-        consistencyBox.innerHTML = `<ul class="msg-list"><li class="error"><span class="icon">✗</span>ブラウザ起動用PACの生成に失敗しました。Base64用PACの構文エラー: ${escapeHtml(reason)}</li></ul>`;
+        consistencyBox.innerHTML = alertHtml("error", `ブラウザ起動用PACの生成に失敗しました。Base64用PACの構文エラー: ${reason}`);
         return;
     }
-    bodyBox.style.display = "";
+    bodyBox.hidden = false;
 
     const dataUrl = buildPacDataUrl(run.base64);
     const pacArg = buildProxyPacArgument(dataUrl);
     const edgeCmd = buildEdgeShortcutCommand(pacArg);
     const chromeCmd = buildChromeShortcutCommand(pacArg);
-
-    const normalBytes = utf8ByteLength(run.pacCode);
     const liteBytes = utf8ByteLength(run.pacCodeLite);
 
     document.getElementById("dataUrlBox").value = dataUrl;
@@ -2499,24 +2547,15 @@ function renderBrowserLaunchSection(run) {
     document.getElementById("edgeCmdBox").value = edgeCmd;
     document.getElementById("chromeCmdBox").value = chromeCmd;
 
-    document.getElementById("browserLaunchSizeSummary").innerHTML = `
-        <dl>
-            <dt>通常PAC</dt><dd>${normalBytes.toLocaleString()} bytes</dd>
-            <dt>コメント削除PAC</dt><dd>${liteBytes.toLocaleString()} bytes</dd>
-            <dt>Base64 data URL</dt><dd>${dataUrl.length.toLocaleString()} 文字</dd>
-            <dt>起動引数</dt><dd>${pacArg.length.toLocaleString()} 文字</dd>
-            <dt>Edgeショートカット用</dt><dd>${edgeCmd.length.toLocaleString()} 文字</dd>
-            <dt>Chromeショートカット用</dt><dd>${chromeCmd.length.toLocaleString()} 文字</dd>
-        </dl>`;
-    document.getElementById("dataUrlSizeLine").textContent = `${dataUrl.length.toLocaleString()} 文字`;
+    document.getElementById("dataUrlSizeLine").textContent =
+        `${dataUrl.length.toLocaleString()} 文字（コメント削除版PAC ${liteBytes.toLocaleString()} バイトをBase64化）`;
     document.getElementById("pacArgSizeLine").textContent = `${pacArg.length.toLocaleString()} 文字`;
-    document.getElementById("edgeCmdSizeLine").textContent = `文字数 ${edgeCmd.length.toLocaleString()}`;
-    document.getElementById("chromeCmdSizeLine").textContent = `文字数 ${chromeCmd.length.toLocaleString()}`;
+    document.getElementById("shortcutSizeLine").textContent =
+        `Edge用 ${edgeCmd.length.toLocaleString()} 文字 ／ Chrome用 ${chromeCmd.length.toLocaleString()} 文字`;
 
     const maxLen = Math.max(dataUrl.length, pacArg.length, edgeCmd.length, chromeCmd.length);
-    const warnBox = document.getElementById("browserLaunchWarning");
     warnBox.innerHTML = maxLen >= COMMAND_LENGTH_WARNING_THRESHOLD
-        ? `<ul class="msg-list"><li class="warning"><span class="icon">⚠</span>起動文字列が長くなっています（最大 ${maxLen.toLocaleString()} 文字）。Windowsショートカットや環境によっては正常に利用できない可能性があります。実機で確認してください。</li></ul>`
+        ? alertHtml("warning", `起動文字列が長くなっています（最大 ${maxLen.toLocaleString()} 文字）。Windowsショートカットや環境によっては正常に利用できない可能性があります。実機で確認してください。`)
         : "";
 
     browserLaunchCopyButtons().forEach((b) => { b.disabled = !isBrowserLaunchOutputValid(run); });
@@ -2528,18 +2567,13 @@ function renderPacConsistencyResult(run) {
     const box = document.getElementById("browserLaunchConsistency");
     const consistencyOk = !run.consistency || run.consistency.ok;
     const roundTripOk = !run.roundTrip || run.roundTrip.ok;
-    if (consistencyOk && roundTripOk) {
-        box.innerHTML = "";
-        return;
-    }
-    let html = `<ul class="msg-list">`;
+    let html = "";
     if (!consistencyOk) {
-        html += `<li class="error"><span class="icon">✗</span>通常PACとBase64用PACの判定結果が一致しないURLが ${run.consistency.mismatches.length} 件あります。生成処理の不具合の可能性があるため、コピーを無効化しています。</li>`;
+        html += alertHtml("error", `通常PACとBase64用PACの判定結果が一致しないURLが ${run.consistency.mismatches.length} 件あります。生成処理の不具合の可能性があるため、コピーを無効化しています。`);
     }
     if (!roundTripOk) {
-        html += `<li class="error"><span class="icon">✗</span>Base64エンコード/デコードの往復確認で、元のPACコードと一致しませんでした。生成処理の不具合の可能性があるため、コピーを無効化しています。</li>`;
+        html += alertHtml("error", "Base64エンコード/デコードの往復確認で、元のPACコードと一致しませんでした。生成処理の不具合の可能性があるため、コピーを無効化しています。");
     }
-    html += `</ul>`;
     box.innerHTML = html;
 }
 
@@ -2585,6 +2619,7 @@ function handleGeneratePac() {
 function initEvents() {
     document.querySelectorAll(".tab-btn").forEach((btn) => {
         btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+        btn.addEventListener("keydown", onTabKeydown);
     });
 
     document.getElementById("btnExportJson").addEventListener("click", exportStateAsJSON);
@@ -2601,17 +2636,29 @@ function initEvents() {
     document.querySelectorAll("[data-close-dialog]").forEach((btn) => {
         btn.addEventListener("click", () => document.getElementById(btn.dataset.closeDialog).close());
     });
+    // 背景クリックで閉じる。入力欄での文字選択を背景側へドラッグして離した場合に誤って閉じないよう、
+    // 押下も背景上で始まったときだけ閉じる。
     document.querySelectorAll("dialog").forEach((dialog) => {
+        let pressedOnBackdrop = false;
+        dialog.addEventListener("mousedown", (e) => { pressedOnBackdrop = e.target === dialog; });
         dialog.addEventListener("click", (e) => {
-            if (e.target === dialog) dialog.close();
+            if (e.target === dialog && pressedOnBackdrop) dialog.close();
         });
     });
 
     // システム
     document.getElementById("btnAddSystem").addEventListener("click", () => openSystemDialog(null));
     document.getElementById("btnSaveSystem").addEventListener("click", saveSystemFromDialog);
-    document.getElementById("btnAddConditionRow").addEventListener("click", () => addConditionRow({ id: genId("cond"), type: "hostExact", value: "" }));
-    document.getElementById("btnAddTestUrlRow").addEventListener("click", () => addTestUrlRow({ id: genId("turl"), url: "", expectedRouteId: "" }));
+    document.getElementById("btnAddConditionRow").addEventListener("click", () => {
+        addConditionRow({ id: genId("cond"), type: "hostExact", value: "" });
+        const rows = document.querySelectorAll("#sysFormConditions .cond-value");
+        rows[rows.length - 1].focus();
+    });
+    document.getElementById("btnAddTestUrlRow").addEventListener("click", () => {
+        addTestUrlRow({ id: genId("turl"), url: "", expectedRouteId: "" });
+        const rows = document.querySelectorAll("#sysFormTestUrls .turl-url");
+        rows[rows.length - 1].focus();
+    });
 
     // 条件行は動的に追加・削除されるため、コンテナへのイベント委譲でまとめて扱う。
     // 種類の変更・値の入力・行の削除いずれも「この設定の意味」プレビューへ即時反映する。
@@ -2628,7 +2675,9 @@ function initEvents() {
     sysFormConditionsEl.addEventListener("click", (e) => {
         if (e.target.classList.contains("remove-row")) {
             e.target.closest(".condition-row").remove();
+            renumberDynamicRows();
             updateSystemDialogPreview();
+            document.getElementById("btnAddConditionRow").focus();
         }
     });
     document.getElementById("sysFormRoute").addEventListener("change", () => {
@@ -2638,7 +2687,11 @@ function initEvents() {
 
     // テストURL行も動的に増減するため、同じくコンテナへのイベント委譲で削除を扱う。
     document.getElementById("sysFormTestUrls").addEventListener("click", (e) => {
-        if (e.target.classList.contains("remove-row")) e.target.closest(".testurl-row").remove();
+        if (e.target.classList.contains("remove-row")) {
+            e.target.closest(".testurl-row").remove();
+            renumberDynamicRows();
+            document.getElementById("btnAddTestUrlRow").focus();
+        }
     });
 
     document.getElementById("sysSearch").addEventListener("input", (e) => { uiState.systemFilter.name = e.target.value; renderSystemsTab(); });
